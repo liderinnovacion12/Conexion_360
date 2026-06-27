@@ -1,0 +1,119 @@
+import { Routes, Route, Navigate } from 'react-router-dom'
+import { ROLES } from '../utils/roles.js'
+import ProtectedRoute from './ProtectedRoute.jsx'
+import DashboardLayout from '../layouts/DashboardLayout.jsx'
+import Login from '../pages/Login.jsx'
+import { Forbidden, NotFound } from '../pages/ErrorPages.jsx'
+
+// Admin
+import AdminDashboard from '../modules/admin/AdminDashboard.jsx'
+import UserManagement from '../modules/admin/UserManagement.jsx'
+import AuditLogs from '../modules/admin/AuditLogs.jsx'
+import Settings from '../modules/admin/Settings.jsx'
+// Finance
+import FinanceDashboard from '../modules/finance/FinanceDashboard.jsx'
+import PersonnelRegistry from '../modules/finance/PersonnelRegistry.jsx'
+import PayrollAnalytics from '../modules/finance/PayrollAnalytics.jsx'
+import Certificates from '../modules/finance/Certificates.jsx'
+// Recruitment
+import RecruitmentDashboard from '../modules/recruitment/RecruitmentDashboard.jsx'
+import Pipeline from '../modules/recruitment/Pipeline.jsx'
+import CandidatesAdmin from '../modules/recruitment/CandidatesAdmin.jsx'
+import DocumentReview from '../modules/recruitment/DocumentReview.jsx'
+import CourseAssignment from '../modules/recruitment/CourseAssignment.jsx'
+// Candidate
+import CandidateDashboard from '../modules/candidate/CandidateDashboard.jsx'
+import CandidateProfile from '../modules/candidate/CandidateProfile.jsx'
+import CandidateDocuments from '../modules/candidate/CandidateDocuments.jsx'
+import DataAuthorization from '../modules/candidate/DataAuthorization.jsx'
+import CandidateCourses from '../modules/candidate/CandidateCourses.jsx'
+// Personnel / Contractor
+import EmployeeDashboard from '../modules/personnel/EmployeeDashboard.jsx'
+import EmployeeProfile from '../modules/personnel/EmployeeProfile.jsx'
+import EmployeeDocuments from '../modules/personnel/EmployeeDocuments.jsx'
+import EmployeeCertificates from '../modules/personnel/EmployeeCertificates.jsx'
+import ContractorDashboard from '../modules/personnel/ContractorDashboard.jsx'
+import ContractorContract from '../modules/personnel/ContractorContract.jsx'
+// Auditor
+import AuditorDashboard from '../modules/dashboard/AuditorDashboard.jsx'
+import Compliance from '../modules/dashboard/Compliance.jsx'
+
+// Helper para envolver un grupo de rutas con layout + RBAC.
+const Protected = ({ allow }) => (
+  <ProtectedRoute allow={allow}>
+    <DashboardLayout />
+  </ProtectedRoute>
+)
+
+export default function AppRoutes() {
+  return (
+    <Routes>
+      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route path="/login" element={<Login />} />
+
+      {/* ---------- Administrador General ---------- */}
+      <Route path="/admin" element={<Protected allow={[ROLES.ADMIN]} />}>
+        <Route index element={<AdminDashboard />} />
+        <Route path="usuarios" element={<UserManagement />} />
+        <Route path="reclutamiento" element={<Pipeline />} />
+        <Route path="nomina" element={<PersonnelRegistry />} />
+        <Route path="documentos" element={<DocumentReview />} />
+        <Route path="cursos" element={<CourseAssignment />} />
+        <Route path="auditoria" element={<AuditLogs />} />
+        <Route path="configuracion" element={<Settings />} />
+      </Route>
+
+      {/* ---------- Área Financiera ---------- */}
+      <Route path="/finanzas" element={<Protected allow={[ROLES.FINANCE, ROLES.ADMIN]} />}>
+        <Route index element={<FinanceDashboard />} />
+        <Route path="personal" element={<PersonnelRegistry />} />
+        <Route path="nomina" element={<PayrollAnalytics />} />
+        <Route path="certificados" element={<Certificates />} />
+      </Route>
+
+      {/* ---------- Área de Reclutamiento ---------- */}
+      <Route path="/reclutamiento" element={<Protected allow={[ROLES.RECRUITMENT, ROLES.ADMIN]} />}>
+        <Route index element={<RecruitmentDashboard />} />
+        <Route path="pipeline" element={<Pipeline />} />
+        <Route path="aspirantes" element={<CandidatesAdmin />} />
+        <Route path="documentos" element={<DocumentReview />} />
+        <Route path="cursos" element={<CourseAssignment />} />
+      </Route>
+
+      {/* ---------- Portal de Aspirantes ---------- */}
+      <Route path="/aspirante" element={<Protected allow={[ROLES.CANDIDATE]} />}>
+        <Route index element={<CandidateDashboard />} />
+        <Route path="perfil" element={<CandidateProfile />} />
+        <Route path="documentos" element={<CandidateDocuments />} />
+        <Route path="autorizacion" element={<DataAuthorization />} />
+        <Route path="cursos" element={<CandidateCourses />} />
+      </Route>
+
+      {/* ---------- Personal Activo ---------- */}
+      <Route path="/personal" element={<Protected allow={[ROLES.EMPLOYEE]} />}>
+        <Route index element={<EmployeeDashboard />} />
+        <Route path="perfil" element={<EmployeeProfile />} />
+        <Route path="documentos" element={<EmployeeDocuments />} />
+        <Route path="certificados" element={<EmployeeCertificates />} />
+      </Route>
+
+      {/* ---------- Contratista ---------- */}
+      <Route path="/contratista" element={<Protected allow={[ROLES.CONTRACTOR]} />}>
+        <Route index element={<ContractorDashboard />} />
+        <Route path="contrato" element={<ContractorContract />} />
+        <Route path="documentos" element={<EmployeeDocuments title="Mis documentos del contrato" />} />
+      </Route>
+
+      {/* ---------- Auditor / Consulta ---------- */}
+      <Route path="/auditoria" element={<Protected allow={[ROLES.AUDITOR, ROLES.ADMIN]} />}>
+        <Route index element={<AuditorDashboard />} />
+        <Route path="registros" element={<AuditLogs readOnly />} />
+        <Route path="cumplimiento" element={<Compliance />} />
+      </Route>
+
+      {/* ---------- Errores ---------- */}
+      <Route path="/403" element={<Forbidden />} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  )
+}
