@@ -9,27 +9,38 @@ import { ProgressBar } from '../../components/ui/Badge.jsx'
 import { AlertBanner } from '../../components/ui/Feedback.jsx'
 import WebcamCapture from '../../components/feature/WebcamCapture.jsx'
 import { useAuth } from '../../context/AuthContext.jsx'
-import { COURSES, COURSE_PROGRESS, SAMPLE_QUIZ } from '../../data/mockCourses.js'
+import { useCourses } from '../../hooks/useCourses.js'
 import { generateCourseCertificate } from '../../utils/pdf.js'
 
 export default function CandidateCourses() {
   const { user } = useAuth()
   const cid = user.candidateId
-  const assigned = COURSES.filter((c) => c.assigned.includes(cid))
+  const { courses, progress, getQuiz, recordProgress } = useCourses()
+  const assigned = courses.filter((c) => c.assigned.includes(cid))
   const [viewer, setViewer] = useState(null)
   const [evalFor, setEvalFor] = useState(null)
+  const [quiz, setQuiz] = useState([])
   const [answers, setAnswers] = useState({})
   const [evidence, setEvidence] = useState(null)
   const [result, setResult] = useState(null)
 
-  const progressOf = (id) => COURSE_PROGRESS.find((p) => p.candidateId === cid && p.courseId === id)
+  const progressOf = (id) => progress.find((p) => p.candidateId === cid && p.courseId === id)
+
+  const startEval = (course) => {
+    setEvalFor(course)
+    setQuiz(getQuiz(course.id))
+    setAnswers({})
+    setEvidence(null)
+    setResult(null)
+  }
 
   const submitEval = () => {
     // Cálculo automático de puntaje (preguntas con respuesta correcta conocida).
-    const gradable = SAMPLE_QUIZ.filter((q) => q.answer !== null)
+    const gradable = quiz.filter((q) => q.answer !== null && q.answer !== undefined)
     const correct = gradable.filter((q) => String(answers[q.id]) === String(q.answer)).length
-    const score = Math.round((correct / gradable.length) * 100)
+    const score = gradable.length ? Math.round((correct / gradable.length) * 100) : 0
     const passed = score >= (evalFor.passScore || 70)
+    recordProgress(cid, evalFor.id, { progress: 100, score, status: passed ? 'aprobado' : 'reprobado' })
     setResult({ score, passed, course: evalFor.title })
   }
 
@@ -66,7 +77,7 @@ export default function CandidateCourses() {
                       Descargar certificado
                     </Button>
                   ) : (
-                    <Button size="sm" variant="violet" icon={CheckCircle2} className="full" onClick={() => { setEvalFor(c); setAnswers({}); setEvidence(null); setResult(null) }}>
+                    <Button size="sm" variant="violet" icon={CheckCircle2} className="full" onClick={() => startEval(c)}>
                       Presentar evaluación
                     </Button>
                   )}
@@ -120,11 +131,11 @@ export default function CandidateCourses() {
 
             <div className="divider" />
 
-            {SAMPLE_QUIZ.map((q, i) => (
-              <div key={q.id} className="glass-soft" style={{ padding: 14 }}>
+            {quiz.map((q, i) => (
+              <div key={q.id || i} className="glass-soft" style={{ padding: 14 }}>
                 <b style={{ fontSize: '0.88rem' }}>{i + 1}. {q.question}</b>
                 <div className="col gap-1" style={{ marginTop: 10 }}>
-                  {q.type === 'multiple' && q.options.map((opt, idx) => (
+                  {q.type === 'multiple' && (q.options || []).map((opt, idx) => (
                     <label key={idx} className="row gap-2" style={{ cursor: 'pointer' }}>
                       <input type="radio" name={q.id} onChange={() => setAnswers({ ...answers, [q.id]: idx })} /> {opt}
                     </label>

@@ -1,39 +1,67 @@
 import { useState } from 'react'
-import { Plus, FileVideo, FileText, Users, Camera, ClipboardList, Trash2 } from 'lucide-react'
+import { Plus, FileVideo, FileText, Users, Camera, ClipboardList, Trash2, Check } from 'lucide-react'
 import PageHeader from '../../components/common/PageHeader.jsx'
 import { Card } from '../../components/ui/Card.jsx'
 import Modal from '../../components/ui/Modal.jsx'
 import Button from '../../components/ui/Button.jsx'
 import Badge from '../../components/ui/Badge.jsx'
 import { ProgressBar } from '../../components/ui/Badge.jsx'
-import { Tabs } from '../../components/ui/Feedback.jsx'
+import { Tabs, AlertBanner } from '../../components/ui/Feedback.jsx'
 import { Field, Input, Select, Textarea } from '../../components/ui/Form.jsx'
-import { COURSES, COURSE_PROGRESS, WEBCAM_EVIDENCE } from '../../data/mockCourses.js'
+import { WEBCAM_EVIDENCE } from '../../data/mockCourses.js'
 import { CANDIDATES } from '../../data/mockCandidates.js'
+import { useCourses } from '../../hooks/useCourses.js'
 import { formatDateTime } from '../../utils/format.js'
 
 const candName = (id) => CANDIDATES.find((c) => c.id === id)?.name || id
+const emptyCourseForm = { title: '', type: 'video', duration: '20 min', description: '', passScore: 70 }
+const emptyQuestion = () => ({ id: `q-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, type: 'multiple', question: '', options: ['', ''], answer: null })
 
 export default function CourseAssignment() {
+  const { courses, progress, getQuiz, saveQuiz, createCourse, assignToCandidates } = useCourses()
   const [tab, setTab] = useState('cursos')
   const [assignFor, setAssignFor] = useState(null)
-  const [quizOpen, setQuizOpen] = useState(false)
-  const [questions, setQuestions] = useState([{ type: 'multiple', text: '', options: ['', ''] }])
+  const [assignChecked, setAssignChecked] = useState([])
+  const [courseOpen, setCourseOpen] = useState(false)
+  const [courseForm, setCourseForm] = useState(emptyCourseForm)
+  const [quizFor, setQuizFor] = useState(null)
+  const [quizTitle, setQuizTitle] = useState('')
+  const [quizPass, setQuizPass] = useState(70)
+  const [questions, setQuestions] = useState([emptyQuestion()])
 
-  const addQuestion = () => setQuestions((q) => [...q, { type: 'multiple', text: '', options: ['', ''] }])
+  const addQuestion = () => setQuestions((q) => [...q, emptyQuestion()])
   const removeQuestion = (i) => setQuestions((q) => q.filter((_, idx) => idx !== i))
+  const updateQuestion = (i, patch) => setQuestions((q) => q.map((it, idx) => (idx === i ? { ...it, ...patch } : it)))
+
+  const openAssign = (c) => { setAssignFor(c); setAssignChecked(c.assigned || []) }
+  const saveAssign = () => { assignToCandidates(assignFor.id, assignChecked); setAssignFor(null) }
+  const toggleAssign = (id) => setAssignChecked((list) => (list.includes(id) ? list.filter((x) => x !== id) : [...list, id]))
+
+  const saveCourse = () => {
+    if (!courseForm.title.trim()) return
+    createCourse(courseForm)
+    setCourseForm(emptyCourseForm)
+    setCourseOpen(false)
+  }
+
+  const openQuiz = (course) => {
+    setQuizFor(course)
+    setQuizTitle(`Evaluación · ${course.title}`)
+    setQuizPass(course.passScore || 70)
+    setQuestions(getQuiz(course.id).map((q) => ({ ...q, id: q.id || emptyQuestion().id })))
+  }
+  const persistQuiz = () => {
+    if (!quizFor) return
+    saveQuiz(quizFor.id, questions.map((q) => ({ ...q, question: q.question || q.text || '' })))
+    setQuizFor(null)
+  }
 
   return (
     <div className="page">
       <PageHeader
         title="Cursos y evaluaciones"
         subtitle="Crea contenido, asígnalo a aspirantes y controla su avance."
-        actions={
-          <>
-            <Button variant="ghost" icon={ClipboardList} onClick={() => setQuizOpen(true)}>Crear evaluación</Button>
-            <Button variant="primary" icon={Plus}>Nuevo curso</Button>
-          </>
-        }
+        actions={<Button variant="primary" icon={Plus} onClick={() => setCourseOpen(true)}>Nuevo curso</Button>}
       />
 
       <Tabs
@@ -49,7 +77,7 @@ export default function CourseAssignment() {
 
       {tab === 'cursos' && (
         <div className="grid grid-3 stagger">
-          {COURSES.map((c) => (
+          {courses.map((c) => (
             <Card key={c.id}>
               <div className="row gap-2" style={{ marginBottom: 10 }}>
                 <div className="kpi-icon" style={{ margin: 0, width: 38, height: 38, '--kpi-icon-bg': c.type === 'video' ? 'var(--grad-violet)' : 'var(--grad-teal)' }}>
@@ -64,7 +92,10 @@ export default function CourseAssignment() {
                 <Badge variant="info">Aprob. {c.passScore}%</Badge>
               </div>
               <div className="divider" />
-              <Button size="sm" variant="ghost" icon={Users} className="full" onClick={() => setAssignFor(c)}>Asignar aspirantes</Button>
+              <div className="row gap-2">
+                <Button size="sm" variant="ghost" icon={Users} className="full" onClick={() => openAssign(c)}>Asignar</Button>
+                <Button size="sm" variant="ghost" icon={ClipboardList} className="full" onClick={() => openQuiz(c)}>Evaluación</Button>
+              </div>
             </Card>
           ))}
         </div>
@@ -76,8 +107,8 @@ export default function CourseAssignment() {
             <table className="table">
               <thead><tr><th>Aspirante</th><th>Curso</th><th>Avance</th><th>Puntaje</th><th>Estado</th></tr></thead>
               <tbody>
-                {COURSE_PROGRESS.map((p, i) => {
-                  const course = COURSES.find((c) => c.id === p.courseId)
+                {progress.map((p, i) => {
+                  const course = courses.find((c) => c.id === p.courseId)
                   return (
                     <tr key={i}>
                       <td className="strong">{candName(p.candidateId)}</td>
@@ -103,7 +134,7 @@ export default function CourseAssignment() {
                   <div className="webcam-placeholder"><Camera size={26} /></div>
                 </div>
                 <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{e.user}</div>
-                <div className="card-sub">{COURSES.find((c) => c.id === e.courseId)?.title}</div>
+                <div className="card-sub">{courses.find((c) => c.id === e.courseId)?.title}</div>
                 <div className="dim" style={{ fontSize: '0.74rem', marginTop: 4 }}>{formatDateTime(e.timestamp)}</div>
               </div>
             ))}
@@ -111,19 +142,37 @@ export default function CourseAssignment() {
         </Card>
       )}
 
+      {/* Nuevo curso */}
+      <Modal
+        open={courseOpen}
+        onClose={() => setCourseOpen(false)}
+        title="Nuevo curso"
+        footer={<><Button variant="ghost" onClick={() => setCourseOpen(false)}>Cancelar</Button><Button variant="primary" onClick={saveCourse}>Crear curso</Button></>}
+      >
+        <div className="col gap-3">
+          <Field label="Título" required><Input value={courseForm.title} onChange={(e) => setCourseForm({ ...courseForm, title: e.target.value })} /></Field>
+          <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <Field label="Tipo de contenido"><Select value={courseForm.type} onChange={(e) => setCourseForm({ ...courseForm, type: e.target.value })} options={[{ value: 'video', label: 'Video' }, { value: 'pdf', label: 'PDF' }]} /></Field>
+            <Field label="Duración"><Input value={courseForm.duration} onChange={(e) => setCourseForm({ ...courseForm, duration: e.target.value })} /></Field>
+          </div>
+          <Field label="Descripción"><Textarea value={courseForm.description} onChange={(e) => setCourseForm({ ...courseForm, description: e.target.value })} /></Field>
+          <Field label="Puntaje mínimo de aprobación (%)"><Input type="number" value={courseForm.passScore} onChange={(e) => setCourseForm({ ...courseForm, passScore: Number(e.target.value) })} /></Field>
+        </div>
+      </Modal>
+
       {/* Asignar aspirantes */}
       <Modal
         open={!!assignFor}
         onClose={() => setAssignFor(null)}
         title={`Asignar: ${assignFor?.title || ''}`}
-        footer={<Button variant="primary" onClick={() => setAssignFor(null)}>Guardar asignación</Button>}
+        footer={<Button variant="primary" icon={Check} onClick={saveAssign}>Guardar asignación</Button>}
       >
         <div className="col gap-2">
           <p className="card-sub">Selecciona los aspirantes que tomarán este curso.</p>
-          {CANDIDATES.slice(0, 8).map((c) => (
+          {CANDIDATES.map((c) => (
             <label key={c.id} className="stat-row" style={{ cursor: 'pointer' }}>
               <span className="row gap-2"><div className="avatar avatar--sm">{c.name.split(' ').map((w) => w[0]).slice(0, 2).join('')}</div>{c.name}</span>
-              <input type="checkbox" defaultChecked={assignFor?.assigned.includes(c.id)} />
+              <input type="checkbox" checked={assignChecked.includes(c.id)} onChange={() => toggleAssign(c.id)} />
             </label>
           ))}
         </div>
@@ -131,29 +180,33 @@ export default function CourseAssignment() {
 
       {/* Constructor de evaluaciones */}
       <Modal
-        open={quizOpen}
-        onClose={() => setQuizOpen(false)}
-        title="Constructor de evaluación"
+        open={!!quizFor}
+        onClose={() => setQuizFor(null)}
+        title={`Evaluación · ${quizFor?.title || ''}`}
         width={640}
-        footer={<><Button variant="ghost" onClick={() => setQuizOpen(false)}>Cancelar</Button><Button variant="primary">Guardar evaluación</Button></>}
+        footer={<><Button variant="ghost" onClick={() => setQuizFor(null)}>Cancelar</Button><Button variant="primary" onClick={persistQuiz}>Guardar evaluación</Button></>}
       >
         <div className="col gap-3">
+          <AlertBanner variant="info">Los cambios quedan guardados para este curso y se verán reflejados en el portal del aspirante.</AlertBanner>
           <div className="grid" style={{ gridTemplateColumns: '2fr 1fr', gap: 12 }}>
-            <Field label="Título de la evaluación"><Input placeholder="Ej: Evaluación de inducción" /></Field>
-            <Field label="Puntaje mínimo (%)"><Input type="number" defaultValue={70} /></Field>
+            <Field label="Título de la evaluación"><Input value={quizTitle} onChange={(e) => setQuizTitle(e.target.value)} /></Field>
+            <Field label="Puntaje mínimo (%)"><Input type="number" value={quizPass} onChange={(e) => setQuizPass(Number(e.target.value))} /></Field>
           </div>
           <div className="divider" />
           {questions.map((q, i) => (
-            <div key={i} className="glass-soft" style={{ padding: 14 }}>
+            <div key={q.id} className="glass-soft" style={{ padding: 14 }}>
               <div className="row between" style={{ marginBottom: 8 }}>
                 <b style={{ fontSize: '0.85rem' }}>Pregunta {i + 1}</b>
                 {questions.length > 1 && <Button size="sm" variant="ghost" icon={Trash2} onClick={() => removeQuestion(i)} />}
               </div>
               <div className="grid" style={{ gridTemplateColumns: '2fr 1fr', gap: 10 }}>
-                <Field label="Enunciado"><Input placeholder="Escribe la pregunta" /></Field>
+                <Field label="Enunciado">
+                  <Input value={q.question || ''} onChange={(e) => updateQuestion(i, { question: e.target.value })} placeholder="Escribe la pregunta" />
+                </Field>
                 <Field label="Tipo">
                   <Select
-                    defaultValue={q.type}
+                    value={q.type}
+                    onChange={(e) => updateQuestion(i, { type: e.target.value, options: e.target.value === 'multiple' ? ['', ''] : undefined })}
                     options={[
                       { value: 'multiple', label: 'Opción múltiple' },
                       { value: 'boolean', label: 'Verdadero / Falso' },
@@ -162,6 +215,35 @@ export default function CourseAssignment() {
                   />
                 </Field>
               </div>
+              {q.type === 'multiple' && (
+                <div className="col gap-2" style={{ marginTop: 10 }}>
+                  {(q.options || ['', '']).map((opt, oi) => (
+                    <div key={oi} className="row gap-2">
+                      <input
+                        type="radio"
+                        checked={q.answer === oi}
+                        onChange={() => updateQuestion(i, { answer: oi })}
+                      />
+                      <Input
+                        value={opt}
+                        onChange={(e) => {
+                          const opts = [...(q.options || [])]
+                          opts[oi] = e.target.value
+                          updateQuestion(i, { options: opts })
+                        }}
+                        placeholder={`Opción ${oi + 1}`}
+                      />
+                    </div>
+                  ))}
+                  <Button size="sm" variant="ghost" icon={Plus} onClick={() => updateQuestion(i, { options: [...(q.options || []), ''] })}>Agregar opción</Button>
+                </div>
+              )}
+              {q.type === 'boolean' && (
+                <div className="row gap-3" style={{ marginTop: 10 }}>
+                  <label className="row gap-2"><input type="radio" checked={q.answer === true} onChange={() => updateQuestion(i, { answer: true })} /> Verdadero</label>
+                  <label className="row gap-2"><input type="radio" checked={q.answer === false} onChange={() => updateQuestion(i, { answer: false })} /> Falso</label>
+                </div>
+              )}
             </div>
           ))}
           <Button variant="ghost" icon={Plus} onClick={addQuestion}>Agregar pregunta</Button>

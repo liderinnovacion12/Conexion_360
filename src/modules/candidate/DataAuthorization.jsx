@@ -5,12 +5,14 @@ import { Card } from '../../components/ui/Card.jsx'
 import Button from '../../components/ui/Button.jsx'
 import Badge from '../../components/ui/Badge.jsx'
 import { AlertBanner } from '../../components/ui/Feedback.jsx'
-import SignaturePad from '../../components/feature/SignaturePad.jsx'
+import SignaturePicker from '../../components/feature/SignaturePicker.jsx'
 import { useAuth } from '../../context/AuthContext.jsx'
+import { useMySignatures } from '../../hooks/useMySignatures.js'
 import { formatDate } from '../../utils/format.js'
 
 export default function DataAuthorization() {
   const { user } = useAuth()
+  const [library, setLibrary] = useMySignatures()
   const [accepted, setAccepted] = useState(false)
   const [signature, setSignature] = useState(null)
   const [done, setDone] = useState(false)
@@ -93,7 +95,7 @@ export default function DataAuthorization() {
           </label>
 
           <div className="field"><label>Firma digital <span className="req">*</span></label></div>
-          <SignaturePad onChange={setSignature} />
+          <SignaturePicker library={library} setLibrary={setLibrary} active={signature} onSelect={setSignature} />
 
           {!canSubmit && (
             <AlertBanner variant="info">Marca la casilla de aceptación y registra tu firma para continuar.</AlertBanner>

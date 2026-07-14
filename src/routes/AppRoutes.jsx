@@ -8,32 +8,49 @@ import { Forbidden, NotFound } from '../pages/ErrorPages.jsx'
 // Admin
 import AdminDashboard from '../modules/admin/AdminDashboard.jsx'
 import UserManagement from '../modules/admin/UserManagement.jsx'
+import DocumentEditor from '../modules/admin/DocumentEditor.jsx'
 import AuditLogs from '../modules/admin/AuditLogs.jsx'
 import Settings from '../modules/admin/Settings.jsx'
+import Permissions from '../modules/admin/Permissions.jsx'
+import DocumentApprovals from '../modules/admin/DocumentApprovals.jsx'
+import Activities from '../modules/admin/Activities.jsx'
+import SystemActivities from '../modules/admin/SystemActivities.jsx'
+import ClientRequests from '../modules/admin/ClientRequests.jsx'
 // Finance
 import FinanceDashboard from '../modules/finance/FinanceDashboard.jsx'
 import PersonnelRegistry from '../modules/finance/PersonnelRegistry.jsx'
 import PayrollAnalytics from '../modules/finance/PayrollAnalytics.jsx'
 import Certificates from '../modules/finance/Certificates.jsx'
+import Clients from '../modules/finance/Clients.jsx'
+import Invoicing from '../modules/finance/Invoicing.jsx'
 // Recruitment
 import RecruitmentDashboard from '../modules/recruitment/RecruitmentDashboard.jsx'
 import Pipeline from '../modules/recruitment/Pipeline.jsx'
 import CandidatesAdmin from '../modules/recruitment/CandidatesAdmin.jsx'
 import DocumentReview from '../modules/recruitment/DocumentReview.jsx'
 import CourseAssignment from '../modules/recruitment/CourseAssignment.jsx'
+import CandidateGroups from '../modules/recruitment/CandidateGroups.jsx'
+import FormBuilder from '../modules/recruitment/FormBuilder.jsx'
+// Legal
+import LegalDashboard from '../modules/legal/LegalDashboard.jsx'
+import ContractTemplates from '../modules/legal/ContractTemplates.jsx'
+import ContractIssuance from '../modules/legal/ContractIssuance.jsx'
+import LegalApprovals from '../modules/legal/LegalApprovals.jsx'
 // Candidate
 import CandidateDashboard from '../modules/candidate/CandidateDashboard.jsx'
 import CandidateProfile from '../modules/candidate/CandidateProfile.jsx'
 import CandidateDocuments from '../modules/candidate/CandidateDocuments.jsx'
 import DataAuthorization from '../modules/candidate/DataAuthorization.jsx'
 import CandidateCourses from '../modules/candidate/CandidateCourses.jsx'
-// Personnel / Contractor
+// Personnel
 import EmployeeDashboard from '../modules/personnel/EmployeeDashboard.jsx'
 import EmployeeProfile from '../modules/personnel/EmployeeProfile.jsx'
 import EmployeeDocuments from '../modules/personnel/EmployeeDocuments.jsx'
 import EmployeeCertificates from '../modules/personnel/EmployeeCertificates.jsx'
-import ContractorDashboard from '../modules/personnel/ContractorDashboard.jsx'
-import ContractorContract from '../modules/personnel/ContractorContract.jsx'
+import MyContract from '../modules/personnel/MyContract.jsx'
+// Cliente
+import ServicesShowcase from '../modules/client/ServicesShowcase.jsx'
+import MyRequests from '../modules/client/MyRequests.jsx'
 // Auditor
 import AuditorDashboard from '../modules/dashboard/AuditorDashboard.jsx'
 import Compliance from '../modules/dashboard/Compliance.jsx'
@@ -58,8 +75,14 @@ export default function AppRoutes() {
         <Route path="reclutamiento" element={<Pipeline />} />
         <Route path="nomina" element={<PersonnelRegistry />} />
         <Route path="documentos" element={<DocumentReview />} />
+        <Route path="editor-documentos" element={<DocumentEditor />} />
+        <Route path="documentos-por-firmar" element={<DocumentApprovals />} />
+        <Route path="actividades" element={<Activities />} />
+        <Route path="actividades-sistema" element={<SystemActivities />} />
         <Route path="cursos" element={<CourseAssignment />} />
+        <Route path="solicitudes-clientes" element={<ClientRequests />} />
         <Route path="auditoria" element={<AuditLogs />} />
+        <Route path="permisos" element={<Permissions />} />
         <Route path="configuracion" element={<Settings />} />
       </Route>
 
@@ -69,6 +92,11 @@ export default function AppRoutes() {
         <Route path="personal" element={<PersonnelRegistry />} />
         <Route path="nomina" element={<PayrollAnalytics />} />
         <Route path="certificados" element={<Certificates />} />
+        <Route path="clientes" element={<Clients />} />
+        <Route path="facturacion" element={<Invoicing />} />
+        <Route path="editor-documentos" element={<DocumentEditor />} />
+        <Route path="documentos-por-firmar" element={<DocumentApprovals />} />
+        <Route path="actividades" element={<Activities />} />
       </Route>
 
       {/* ---------- Área de Reclutamiento ---------- */}
@@ -76,8 +104,26 @@ export default function AppRoutes() {
         <Route index element={<RecruitmentDashboard />} />
         <Route path="pipeline" element={<Pipeline />} />
         <Route path="aspirantes" element={<CandidatesAdmin />} />
+        <Route path="grupos" element={<CandidateGroups />} />
+        <Route path="formularios" element={<FormBuilder />} />
         <Route path="documentos" element={<DocumentReview />} />
+        <Route path="editor-documentos" element={<DocumentEditor />} />
+        <Route path="aprobaciones" element={<LegalApprovals />} />
+        <Route path="documentos-por-firmar" element={<DocumentApprovals />} />
+        <Route path="actividades" element={<Activities />} />
         <Route path="cursos" element={<CourseAssignment />} />
+      </Route>
+
+      {/* ---------- Área Jurídica ---------- */}
+      <Route path="/juridica" element={<Protected allow={[ROLES.LEGAL, ROLES.ADMIN]} />}>
+        <Route index element={<LegalDashboard />} />
+        <Route path="plantillas" element={<ContractTemplates />} />
+        <Route path="contratos" element={<ContractIssuance />} />
+        <Route path="editor-documentos" element={<DocumentEditor />} />
+        <Route path="aprobaciones" element={<LegalApprovals />} />
+        <Route path="documentos-por-firmar" element={<DocumentApprovals />} />
+        <Route path="actividades" element={<Activities />} />
+        <Route path="aspirantes" element={<CandidatesAdmin />} />
       </Route>
 
       {/* ---------- Portal de Aspirantes ---------- */}
@@ -89,19 +135,19 @@ export default function AppRoutes() {
         <Route path="cursos" element={<CandidateCourses />} />
       </Route>
 
-      {/* ---------- Personal Activo ---------- */}
+      {/* ---------- Personal Activo (incluye prestación de servicios) ---------- */}
       <Route path="/personal" element={<Protected allow={[ROLES.EMPLOYEE]} />}>
         <Route index element={<EmployeeDashboard />} />
         <Route path="perfil" element={<EmployeeProfile />} />
+        <Route path="contrato" element={<MyContract />} />
         <Route path="documentos" element={<EmployeeDocuments />} />
         <Route path="certificados" element={<EmployeeCertificates />} />
       </Route>
 
-      {/* ---------- Contratista ---------- */}
-      <Route path="/contratista" element={<Protected allow={[ROLES.CONTRACTOR]} />}>
-        <Route index element={<ContractorDashboard />} />
-        <Route path="contrato" element={<ContractorContract />} />
-        <Route path="documentos" element={<EmployeeDocuments title="Mis documentos del contrato" />} />
+      {/* ---------- Cliente (vitrina de servicios) ---------- */}
+      <Route path="/cliente" element={<Protected allow={[ROLES.CLIENT]} />}>
+        <Route index element={<ServicesShowcase />} />
+        <Route path="solicitudes" element={<MyRequests />} />
       </Route>
 
       {/* ---------- Auditor / Consulta ---------- */}

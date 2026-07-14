@@ -29,9 +29,9 @@ export const NOTIFICATIONS = {
     { id: 1, title: 'Tu certificado laboral está disponible', time: 'Hace 1 h', color: '#2EE6A6', read: false },
     { id: 2, title: 'Recuerda actualizar tu EPS', time: 'Ayer', color: '#FFC857', read: true },
   ],
-  [ROLES.CONTRACTOR]: [
-    { id: 1, title: 'Tu contrato vence en 12 días', time: 'Hace 2 h', color: '#FFC857', read: false },
-    { id: 2, title: 'Cuenta de cobro de junio aprobada', time: 'Ayer', color: '#2EE6A6', read: true },
+  [ROLES.CLIENT]: [
+    { id: 1, title: 'Tu solicitud de servicio fue recibida', time: 'Hace 2 h', color: '#19E3D9', read: false },
+    { id: 2, title: 'Un asesor comercial te contactará pronto', time: 'Ayer', color: '#2EE6A6', read: true },
   ],
   [ROLES.AUDITOR]: [
     { id: 1, title: 'Nuevo reporte de cumplimiento disponible', time: 'Hace 1 h', color: '#19E3D9', read: false },

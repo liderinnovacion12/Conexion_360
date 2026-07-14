@@ -6,9 +6,10 @@ export const ROLES = {
   ADMIN: 'admin',
   FINANCE: 'finance',
   RECRUITMENT: 'recruitment',
+  LEGAL: 'legal',
   CANDIDATE: 'candidate',
   EMPLOYEE: 'employee',
-  CONTRACTOR: 'contractor',
+  CLIENT: 'client',
   AUDITOR: 'auditor',
 }
 
@@ -17,9 +18,10 @@ export const ROLE_META = {
   [ROLES.ADMIN]: { label: 'Administrador General', short: 'Admin', color: '#9B5DE5', home: '/admin' },
   [ROLES.FINANCE]: { label: 'Área Financiera', short: 'Finanzas', color: '#19E3D9', home: '/finanzas' },
   [ROLES.RECRUITMENT]: { label: 'Área de Reclutamiento', short: 'Reclutamiento', color: '#00BCD4', home: '/reclutamiento' },
+  [ROLES.LEGAL]: { label: 'Área Jurídica', short: 'Jurídica', color: '#E63946', home: '/juridica' },
   [ROLES.CANDIDATE]: { label: 'Aspirante', short: 'Aspirante', color: '#2EE6A6', home: '/aspirante' },
   [ROLES.EMPLOYEE]: { label: 'Personal Activo', short: 'Personal', color: '#FFC857', home: '/personal' },
-  [ROLES.CONTRACTOR]: { label: 'Contratista', short: 'Contratista', color: '#FF8FB1', home: '/contratista' },
+  [ROLES.CLIENT]: { label: 'Cliente', short: 'Cliente', color: '#FF8FB1', home: '/cliente' },
   [ROLES.AUDITOR]: { label: 'Auditor / Consulta', short: 'Auditor', color: '#7BD0FF', home: '/auditoria' },
 }
 

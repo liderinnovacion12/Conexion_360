@@ -7,9 +7,12 @@ import Modal from '../../components/ui/Modal.jsx'
 import Button from '../../components/ui/Button.jsx'
 import Badge from '../../components/ui/Badge.jsx'
 import { Field, Textarea } from '../../components/ui/Form.jsx'
-import { DOCUMENTS, DOCUMENT_VERSIONS } from '../../data/mockDocuments.js'
+import { DOCUMENTS, DOCUMENT_VERSIONS, DOCUMENT_TYPES } from '../../data/mockDocuments.js'
 import { CANDIDATES } from '../../data/mockCandidates.js'
 import { docStatusVariant, formatDateTime } from '../../utils/format.js'
+import { useFormTemplates } from '../../hooks/useFormTemplates.js'
+import { useCandidateGroups } from '../../hooks/useCandidateGroups.js'
+import { resolveRequiredFields } from '../../utils/formTemplates.js'
 
 const candName = (id) => CANDIDATES.find((c) => c.id === id)?.name || id
 
@@ -17,6 +20,19 @@ export default function DocumentReview() {
   const [docs, setDocs] = useState(DOCUMENTS)
   const [active, setActive] = useState(null)
   const [comment, setComment] = useState('')
+  const { templates } = useFormTemplates()
+  const { groupsForCandidate } = useCandidateGroups()
+
+  // Determina si un documento es obligatorio según la plantilla vigente para
+  // la vía/grupo del aspirante (en vez del valor fijo guardado al cargarlo).
+  const isRequiredNow = (doc) => {
+    const candidate = CANDIDATES.find((c) => c.id === doc.candidateId)
+    if (!candidate) return doc.required
+    const groupIds = groupsForCandidate(candidate.id).map((g) => g.id)
+    const fields = resolveRequiredFields(candidate.track, groupIds, templates, DOCUMENT_TYPES)
+    const match = fields.find((f) => f.label === doc.type)
+    return match ? match.required : doc.required
+  }
 
   const open = (d) => { setActive(d); setComment(d.comment || '') }
 
@@ -37,7 +53,7 @@ export default function DocumentReview() {
       <div className="row gap-2"><FileText size={16} className="dim" /><span style={{ color: 'var(--text)' }}>{d.type}</span></div>
     )},
     { key: 'candidateId', header: 'Aspirante', render: (d) => candName(d.candidateId) },
-    { key: 'required', header: 'Tipo', render: (d) => <Badge variant={d.required ? 'violet' : 'neutral'}>{d.required ? 'Requerido' : 'Opcional'}</Badge> },
+    { key: 'required', header: 'Tipo', render: (d) => <Badge variant={isRequiredNow(d) ? 'violet' : 'neutral'}>{isRequiredNow(d) ? 'Requerido' : 'Opcional'}</Badge> },
     { key: 'status', header: 'Estado', render: (d) => <Badge variant={docStatusVariant[d.status]} dot>{d.status}</Badge> },
     { key: 'uploadedAt', header: 'Cargado', sortValue: (d) => new Date(d.uploadedAt).getTime(), render: (d) => formatDateTime(d.uploadedAt) },
     { key: 'actions', header: '', sortable: false, render: (d) => (

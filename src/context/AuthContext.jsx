@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react'
-import { findUserByCredentials } from '../data/mockUsers.js'
+import { findUserByCredentials, setUserPassword } from '../data/mockUsers.js'
 
 const AuthContext = createContext(null)
 const STORAGE_KEY = 'cx360.session'
@@ -56,7 +56,18 @@ export function AuthProvider({ children }) {
     return session
   }, [])
 
-  const value = { user, loading, login, logout, isAuthenticated: !!user }
+  const changePassword = useCallback(
+    (currentPassword, newPassword) => {
+      if (!user) throw new Error('No hay una sesión activa.')
+      const check = findUserByCredentials(user.email, currentPassword)
+      if (!check || check.id !== user.id) throw new Error('La contraseña actual no es correcta.')
+      if (!newPassword || newPassword.length < 4) throw new Error('La nueva contraseña debe tener al menos 4 caracteres.')
+      setUserPassword(user.id, newPassword)
+    },
+    [user]
+  )
+
+  const value = { user, loading, login, logout, changePassword, isAuthenticated: !!user }
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 

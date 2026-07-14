@@ -11,7 +11,10 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "html2canvas": "^1.4.1",
     "lucide-react": "^0.454.0",
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^4.7.76",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.26.2",
@@ -21,5 +24,8 @@
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.2",
     "vite": "^5.4.8"
+  },
+  "overrides": {
+    "rollup": "npm:@rollup/wasm-node"
   }
 }

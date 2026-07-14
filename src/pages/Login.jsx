@@ -1,16 +1,19 @@
 import { useState } from 'react'
 import { useNavigate, Navigate } from 'react-router-dom'
-import { LogIn, Mail, Lock, ShieldCheck, Zap, Layers, Eye, EyeOff } from 'lucide-react'
+import { LogIn, Mail, Lock, Eye, EyeOff, Sun, Moon } from 'lucide-react'
 import AnimatedLogo from '../assets/AnimatedLogo.jsx'
 import { LogoFull } from '../assets/Logo.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
-import { MOCK_USERS } from '../data/mockUsers.js'
+import { useTheme } from '../context/ThemeContext.jsx'
+import { useUsers } from '../hooks/useUsers.js'
 import { ROLE_META, roleHome } from '../utils/roles.js'
 import Button from '../components/ui/Button.jsx'
 import { Field, Input } from '../components/ui/Form.jsx'
 
 export default function Login() {
   const { login, isAuthenticated, user } = useAuth()
+  const { theme, toggleTheme } = useTheme()
+  const { users } = useUsers()
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -42,36 +45,27 @@ export default function Login() {
 
   return (
     <div className="auth-wrap">
-      {/* Lado izquierdo: marca + logo animado */}
-      <div className="auth-hero">
-        <div className="grid-bg" />
+      <button
+        className="icon-btn theme-toggle-float"
+        onClick={toggleTheme}
+        aria-label={theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+        title={theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
+      >
+        {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+      </button>
+
+      {/* Lado izquierdo: solo imagen — el logo ensamblándose y el nombre. Sin texto. */}
+      <div className="auth-hero auth-hero--visual">
         <div className="orb teal" />
         <div className="orb violet" />
-        <div className="logo-stage">
-          <AnimatedLogo />
-        </div>
-        <div className="auth-hero-content">
-          <LogoFull size={40} />
-          <h1>
-            Gestión de talento, <span className="text-grad">documentos y nómina</span> en una sola plataforma.
-          </h1>
-          <p>
-            Reclutamiento, personal activo, contratistas y aspirantes — con control de acceso por rol,
-            trazabilidad documental y analítica ejecutiva en tiempo real.
-          </p>
-          <div className="auth-features">
-            <div className="auth-feature">
-              <span className="ic"><ShieldCheck size={17} /></span>
-              Control de acceso por roles (RBAC) y rutas protegidas
-            </div>
-            <div className="auth-feature">
-              <span className="ic"><Layers size={17} /></span>
-              Pipeline de reclutamiento, cursos y gestión documental
-            </div>
-            <div className="auth-feature">
-              <span className="ic"><Zap size={17} /></span>
-              Listo para Supabase, Vercel e integración con Odoo
-            </div>
+        <div className="auth-hero-visual-stage">
+          <span className="auth-hero-ring auth-hero-ring--1" aria-hidden="true" />
+          <span className="auth-hero-ring auth-hero-ring--2" aria-hidden="true" />
+          <div className="auth-hero-logo-big">
+            <AnimatedLogo />
+          </div>
+          <div className="auth-hero-wordmark">
+            <LogoFull size={72} stacked />
           </div>
         </div>
       </div>
@@ -128,10 +122,10 @@ export default function Login() {
             </Button>
           </form>
 
-          <details className="demo-accounts" open>
+          <details className="demo-accounts">
             <summary>Cuentas de demostración (contraseña: <b>demo</b>)</summary>
             <div className="demo-grid">
-              {MOCK_USERS.map((u) => (
+              {users.map((u) => (
                 <button key={u.id} className="demo-chip" onClick={() => quickFill(u)} type="button">
                   <span className="dot" style={{ background: ROLE_META[u.role].color, color: ROLE_META[u.role].color }} />
                   <span className="grow">{ROLE_META[u.role].label}</span>

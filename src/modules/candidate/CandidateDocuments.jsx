@@ -9,17 +9,30 @@ import { AlertBanner } from '../../components/ui/Feedback.jsx'
 import FileDropzone from '../../components/feature/FileDropzone.jsx'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { DOCUMENTS, DOCUMENT_TYPES } from '../../data/mockDocuments.js'
+import { CANDIDATES } from '../../data/mockCandidates.js'
+import { useFormTemplates } from '../../hooks/useFormTemplates.js'
+import { useCandidateGroups } from '../../hooks/useCandidateGroups.js'
+import { resolveRequiredFields } from '../../utils/formTemplates.js'
 import { docStatusVariant, formatDateTime } from '../../utils/format.js'
 
 export default function CandidateDocuments() {
   const { user } = useAuth()
   const cid = user.candidateId
+  const candidate = CANDIDATES.find((c) => c.id === cid)
+  const { templates } = useFormTemplates()
+  const { groupsForCandidate } = useCandidateGroups()
   const [docs, setDocs] = useState(DOCUMENTS.filter((d) => d.candidateId === cid))
   const [upFor, setUpFor] = useState(null)
   const [file, setFile] = useState(null)
 
-  // Une los tipos requeridos con lo ya cargado.
-  const rows = DOCUMENT_TYPES.map((t) => {
+  // Documentos requeridos según la plantilla vigente para la vía y los
+  // grupos del aspirante (en vez de la lista fija anterior).
+  const groupIds = candidate ? groupsForCandidate(candidate.id).map((g) => g.id) : []
+  const documentFields = resolveRequiredFields(candidate?.track, groupIds, templates, DOCUMENT_TYPES).filter(
+    (f) => f.type === 'document' || !f.type
+  )
+
+  const rows = documentFields.map((t) => {
     const existing = docs.find((d) => d.type === t.label)
     return { ...t, doc: existing }
   })

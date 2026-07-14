@@ -1,14 +1,22 @@
 import { useState } from 'react'
-import { Save } from 'lucide-react'
+import { Save, Briefcase } from 'lucide-react'
 import PageHeader from '../../components/common/PageHeader.jsx'
 import { Card } from '../../components/ui/Card.jsx'
 import Button from '../../components/ui/Button.jsx'
+import Badge from '../../components/ui/Badge.jsx'
 import { AlertBanner } from '../../components/ui/Feedback.jsx'
 import { Field, Input, Select } from '../../components/ui/Form.jsx'
 import { useAuth } from '../../context/AuthContext.jsx'
+import { useCandidateGroups } from '../../hooks/useCandidateGroups.js'
+import { useTracks } from '../../hooks/useTracks.js'
+import { CANDIDATES } from '../../data/mockCandidates.js'
 
 export default function CandidateProfile() {
   const { user } = useAuth()
+  const candidate = CANDIDATES.find((c) => c.id === user.candidateId)
+  const { groupsForCandidate } = useCandidateGroups()
+  const { trackLabel } = useTracks()
+  const myGroups = candidate ? groupsForCandidate(candidate.id) : []
   const [saved, setSaved] = useState(false)
   const [form, setForm] = useState({
     name: user.name, docType: 'Cédula de ciudadanía', doc: '1.022.334.556', birth: '1996-04-12',
@@ -26,6 +34,31 @@ export default function CandidateProfile() {
   return (
     <div className="page">
       <PageHeader title="Mis datos personales" subtitle="Completa tu información para continuar el proceso." />
+
+      {candidate && (
+        <Card className="anim-up" style={{ marginBottom: 16 }}>
+          <div className="row gap-3 wrap" style={{ alignItems: 'center' }}>
+            <span className="row gap-2"><Briefcase size={16} className="dim" />
+              <span className="muted">Vía de vinculación:</span>
+              <Badge variant={candidate.track === 'contratista' ? 'violet' : 'info'}>
+                {trackLabel(candidate.track) || '—'}
+              </Badge>
+            </span>
+            {myGroups.length > 0 && (
+              <span className="row gap-2 wrap">
+                <span className="muted">Grupos:</span>
+                {myGroups.map((g) => <Badge key={g.id} variant="neutral">{g.name}</Badge>)}
+              </span>
+            )}
+          </div>
+          <p className="card-sub" style={{ marginTop: 10 }}>
+            {candidate.track === 'contratista'
+              ? 'Tu proceso corresponde a la vía de contratista (prestación de servicios). Ten a la mano tu RUT y certificación bancaria.'
+              : 'Tu proceso corresponde a la vía de funcionario (vinculación directa a planta).'}
+          </p>
+        </Card>
+      )}
+
       {saved && <AlertBanner variant="success" title="Datos guardados">Tu información fue actualizada correctamente.</AlertBanner>}
 
       <form onSubmit={save}>

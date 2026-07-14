@@ -4,8 +4,9 @@
    Estética: futurista, corporativa, glassmorphism + neón suave.
    ============================================================ */
 
-:root {
-  /* --- Marca --- */
+:root,
+:root[data-theme='dark'] {
+  /* --- Marca (compartida entre temas) --- */
   --teal: #19e3d9;
   --teal-deep: #00838f;
   --cyan: #00bcd4;
@@ -37,18 +38,99 @@
   --danger: #ff5d73;
   --info: var(--cyan);
 
-  /* --- Gradientes --- */
-  --grad-teal: linear-gradient(135deg, var(--teal) 0%, var(--teal-deep) 100%);
-  --grad-violet: linear-gradient(135deg, var(--violet-light) 0%, var(--violet) 100%);
-  --grad-brand: linear-gradient(120deg, var(--teal) 0%, var(--cyan) 40%, var(--violet-light) 100%);
-  --grad-navy-teal: linear-gradient(135deg, var(--navy-3) 0%, var(--teal-deep) 130%);
-  --grad-navy-violet: linear-gradient(135deg, var(--navy-3) 0%, var(--violet) 130%);
-
   /* --- Sombras / Neón --- */
   --glow-teal: 0 0 0 1px rgba(25, 227, 217, 0.25), 0 8px 30px rgba(25, 227, 217, 0.18);
   --glow-violet: 0 0 0 1px rgba(155, 93, 229, 0.25), 0 8px 30px rgba(123, 47, 190, 0.18);
   --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.35);
   --shadow-lg: 0 24px 60px rgba(0, 0, 0, 0.5);
+
+  /* --- Paneles elevados (modal, notificaciones, topbar, bandeja de documentos) ---
+     Fijos "oscuros" a propósito en ambos temas para la barra lateral (marca
+     constante), pero el resto se adapta por tema para no quedar oscuro
+     sobre oscuro en modo claro. */
+  --panel-strong: linear-gradient(180deg, rgba(20, 26, 48, 0.96), rgba(12, 16, 32, 0.98));
+  --panel-soft: rgba(14, 18, 34, 0.9);
+  --overlay: rgba(4, 7, 15, 0.66);
+  --topbar-bg: rgba(8, 11, 22, 0.6);
+  --tray-bg: rgba(0, 0, 0, 0.28);
+  /* Los <select> nativos no soportan fondos translúcidos en sus opciones;
+     necesitan un color opaco propio por tema. */
+  --select-option-bg: #10162a;
+  --scrollbar-thumb: rgba(255, 255, 255, 0.14);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.24);
+
+  /* --- Texto de banners de alerta (pastel sobre fondo oscuro) --- */
+  --alert-warning-text: #ffe2a6;
+  --alert-danger-text: #ffc2cb;
+  --alert-info-text: #b8eef7;
+  --alert-success-text: #bff5e2;
+}
+
+:root[data-theme='light'] {
+  /* --- Marca (mismos tonos, para mantener identidad visual) --- */
+  --teal: #19e3d9;
+  --teal-deep: #00838f;
+  --cyan: #00bcd4;
+  --navy: #0a0e1a;
+  --navy-2: #0e1426;
+  --navy-3: #16213e;
+  --violet: #7b2fbe;
+  --violet-light: #9b5de5;
+  --white: #ffffff;
+
+  /* --- Superficies --- */
+  --bg: #f3f5fa;
+  --bg-grad: radial-gradient(1200px 600px at 80% -10%, rgba(123, 47, 190, 0.08), transparent 60%),
+    radial-gradient(1000px 700px at -10% 110%, rgba(25, 227, 217, 0.10), transparent 55%),
+    linear-gradient(160deg, #f7f9fc 0%, #eef1f8 50%, #eceffb 100%);
+  --surface: rgba(10, 14, 26, 0.035);
+  --surface-2: rgba(10, 14, 26, 0.065);
+  --glass-border: rgba(10, 14, 26, 0.10);
+  --glass-border-strong: rgba(10, 14, 26, 0.18);
+
+  /* --- Texto --- */
+  --text: #0d1324;
+  --text-soft: #4a5578;
+  --text-dim: #7c869e;
+
+  /* --- Estados --- */
+  --success: #0f9d70;
+  --warning: #b3790f;
+  --danger: #d6304a;
+  --info: var(--teal-deep);
+
+  /* --- Sombras / Neón --- */
+  --glow-teal: 0 0 0 1px rgba(0, 131, 143, 0.20), 0 8px 30px rgba(25, 227, 217, 0.14);
+  --glow-violet: 0 0 0 1px rgba(123, 47, 190, 0.20), 0 8px 30px rgba(123, 47, 190, 0.14);
+  --shadow-card: 0 10px 30px rgba(20, 24, 40, 0.08);
+  --shadow-lg: 0 24px 60px rgba(20, 24, 40, 0.14);
+
+  /* --- Paneles elevados: versión clara (la barra lateral se mantiene
+     oscura a propósito como color de marca constante) --- */
+  --panel-strong: linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(248, 249, 252, 0.99));
+  --panel-soft: rgba(255, 255, 255, 0.92);
+  --overlay: rgba(20, 24, 40, 0.32);
+  --topbar-bg: rgba(255, 255, 255, 0.68);
+  --tray-bg: rgba(10, 14, 26, 0.06);
+  --select-option-bg: #ffffff;
+  --scrollbar-thumb: rgba(10, 14, 26, 0.16);
+  --scrollbar-thumb-hover: rgba(10, 14, 26, 0.26);
+
+  /* --- Texto de banners de alerta: versiones oscuras y saturadas para
+     leerse bien sobre el lavado de color claro --- */
+  --alert-warning-text: #8a5a00;
+  --alert-danger-text: #a3132b;
+  --alert-info-text: #005a66;
+  --alert-success-text: #0d7a52;
+}
+
+:root {
+  /* --- Gradientes (dependen solo de las variables de marca, iguales en ambos temas) --- */
+  --grad-teal: linear-gradient(135deg, var(--teal) 0%, var(--teal-deep) 100%);
+  --grad-violet: linear-gradient(135deg, var(--violet-light) 0%, var(--violet) 100%);
+  --grad-brand: linear-gradient(120deg, var(--teal) 0%, var(--cyan) 40%, var(--violet-light) 100%);
+  --grad-navy-teal: linear-gradient(135deg, var(--navy-3) 0%, var(--teal-deep) 130%);
+  --grad-navy-violet: linear-gradient(135deg, var(--navy-3) 0%, var(--violet) 130%);
 
   /* --- Geometría --- */
   --r-sm: 8px;
@@ -82,6 +164,7 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   line-height: 1.5;
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 a {
@@ -102,13 +185,13 @@ button {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--scrollbar-thumb);
   border-radius: 99px;
   border: 2px solid transparent;
   background-clip: padding-box;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.22);
+  background: var(--scrollbar-thumb-hover);
   background-clip: padding-box;
 }
 

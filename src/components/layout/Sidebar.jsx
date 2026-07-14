@@ -2,13 +2,20 @@ import { NavLink } from 'react-router-dom'
 import { PanelLeftClose, PanelLeft, LogOut } from 'lucide-react'
 import { LogoMark } from '../../assets/Logo.jsx'
 import { useAuth } from '../../context/AuthContext.jsx'
+import { usePermissions } from '../../context/PermissionsContext.jsx'
 import { NAV_CONFIG } from '../../routes/navConfig.jsx'
 import { ROLE_META } from '../../utils/roles.js'
 
 export default function Sidebar({ collapsed, onToggle, mobileOpen, onCloseMobile }) {
   const { user, logout } = useAuth()
-  const sections = NAV_CONFIG[user?.role] || []
+  const { isNavItemEnabled } = usePermissions()
   const meta = ROLE_META[user?.role]
+
+  // Filtra los ítems deshabilitados por el Admin en Permisos, y oculta
+  // secciones que se queden sin ítems visibles.
+  const sections = (NAV_CONFIG[user?.role] || [])
+    .map((sec) => ({ ...sec, items: sec.items.filter((item) => isNavItemEnabled(user?.id, item.to)) }))
+    .filter((sec) => sec.items.length > 0)
 
   return (
     <aside className={`sidebar ${collapsed ? 'collapsed' : ''} ${mobileOpen ? 'mobile-open' : ''}`}>

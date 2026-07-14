@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { UserPlus, Pencil, Shield } from 'lucide-react'
+import { UserPlus, Pencil, Shield, Trash2, KeyRound } from 'lucide-react'
 import PageHeader from '../../components/common/PageHeader.jsx'
 import { Card } from '../../components/ui/Card.jsx'
 import DataTable from '../../components/ui/DataTable.jsx'
@@ -7,37 +7,57 @@ import Modal from '../../components/ui/Modal.jsx'
 import Button from '../../components/ui/Button.jsx'
 import Badge from '../../components/ui/Badge.jsx'
 import { Field, Input, Select } from '../../components/ui/Form.jsx'
-import { MOCK_USERS } from '../../data/mockUsers.js'
+import { AlertBanner } from '../../components/ui/Feedback.jsx'
+import { useUsers } from '../../hooks/useUsers.js'
 import { ROLE_META, ROLES } from '../../utils/roles.js'
 import { exportToCSV } from '../../utils/pdf.js'
+import { setUserPassword } from '../../data/mockUsers.js'
+
+const emptyForm = { name: '', email: '', role: ROLES.EMPLOYEE, area: '' }
 
 export default function UserManagement() {
-  const [users, setUsers] = useState(MOCK_USERS)
+  const { users, addUser, updateUser, removeUser } = useUsers()
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState(null)
-  const [form, setForm] = useState({ name: '', email: '', role: ROLES.EMPLOYEE, area: '' })
+  const [form, setForm] = useState(emptyForm)
+  const [created, setCreated] = useState(null)
+  const [resetting, setResetting] = useState(null) // usuario al que se le está restableciendo la clave
+  const [resetDone, setResetDone] = useState(null) // { email, password } ya restablecida
 
   const openCreate = () => {
     setEditing(null)
-    setForm({ name: '', email: '', role: ROLES.EMPLOYEE, area: '' })
+    setForm(emptyForm)
+    setCreated(null)
     setOpen(true)
   }
   const openEdit = (u) => {
     setEditing(u)
     setForm({ name: u.name, email: u.email, role: u.role, area: u.area })
+    setCreated(null)
     setOpen(true)
   }
   const save = () => {
     if (!form.name || !form.email) return
     if (editing) {
-      setUsers((us) => us.map((u) => (u.id === editing.id ? { ...u, ...form } : u)))
+      updateUser(editing.id, form)
+      setOpen(false)
     } else {
-      setUsers((us) => [
-        ...us,
-        { ...form, id: `u-${Date.now()}`, avatar: form.name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase() },
-      ])
+      const avatar = form.name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()
+      addUser({ ...form, avatar })
+      setCreated({ email: form.email, password: 'demo' })
     }
-    setOpen(false)
+  }
+
+  // Restablecer la contraseña de alguien que no la recuerda: el Admin genera
+  // una nueva clave temporal y se la comunica; la persona puede cambiarla
+  // luego desde su propio menú de usuario.
+  const askReset = (u) => setResetting(u)
+  const confirmReset = () => {
+    if (!resetting) return
+    const temp = Math.random().toString(36).slice(-8)
+    setUserPassword(resetting.id, temp)
+    setResetDone({ email: resetting.email, password: temp })
+    setResetting(null)
   }
 
   const columns = [
@@ -66,9 +86,11 @@ export default function UserManagement() {
       header: 'Acciones',
       sortable: false,
       render: (u) => (
-        <Button size="sm" variant="ghost" icon={Pencil} onClick={() => openEdit(u)}>
-          Editar
-        </Button>
+        <div className="row gap-1">
+          <Button size="sm" variant="ghost" icon={Pencil} onClick={() => openEdit(u)}>Editar</Button>
+          <Button size="sm" variant="ghost" icon={KeyRound} onClick={() => askReset(u)} title="Restablecer contraseña">Clave</Button>
+          <Button size="sm" variant="ghost" icon={Trash2} onClick={() => removeUser(u.id)} />
+        </div>
       ),
     },
   ]
@@ -77,7 +99,7 @@ export default function UserManagement() {
     <div className="page">
       <PageHeader
         title="Gestión de usuarios"
-        subtitle="Administra cuentas, roles y permisos de toda la plataforma."
+        subtitle="Administra cuentas y roles. Los permisos finos de cada persona se ajustan en Admin → Permisos."
         actions={<Button variant="primary" icon={UserPlus} onClick={openCreate}>Nuevo usuario</Button>}
       />
 
@@ -102,30 +124,84 @@ export default function UserManagement() {
         onClose={() => setOpen(false)}
         title={editing ? 'Editar usuario' : 'Crear nuevo usuario'}
         footer={
+          created ? (
+            <Button variant="primary" onClick={() => setOpen(false)}>Entendido</Button>
+          ) : (
+            <>
+              <Button variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
+              <Button variant="primary" icon={Shield} onClick={save}>{editing ? 'Guardar cambios' : 'Crear usuario'}</Button>
+            </>
+          )
+        }
+      >
+        {created ? (
+          <div className="col gap-3">
+            <AlertBanner variant="success" title="Usuario creado">
+              Ya puede iniciar sesión y aparece en Admin → Permisos para ajustar sus accesos individuales.
+            </AlertBanner>
+            <div className="glass-soft" style={{ padding: 14 }}>
+              <div className="stat-row"><span className="muted">Usuario</span><b>{created.email}</b></div>
+              <div className="stat-row"><span className="muted">Contraseña</span><b>{created.password}</b></div>
+            </div>
+          </div>
+        ) : (
+          <div className="col gap-3">
+            <Field label="Nombre completo" required>
+              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Nombre y apellidos" />
+            </Field>
+            <Field label="Correo electrónico" required>
+              <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="correo@conexion360.co" />
+            </Field>
+            <Field label="Rol" required>
+              <Select
+                value={form.role}
+                onChange={(e) => setForm({ ...form, role: e.target.value })}
+                options={Object.values(ROLES).map((r) => ({ value: r, label: ROLE_META[r].label }))}
+              />
+            </Field>
+            <Field label="Área / departamento">
+              <Input value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value })} placeholder="Ej: Operaciones" />
+            </Field>
+          </div>
+        )}
+      </Modal>
+
+      <Modal
+        open={!!resetting}
+        onClose={() => setResetting(null)}
+        title="Restablecer contraseña"
+        footer={
           <>
-            <Button variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
-            <Button variant="primary" icon={Shield} onClick={save}>{editing ? 'Guardar cambios' : 'Crear usuario'}</Button>
+            <Button variant="ghost" onClick={() => setResetting(null)}>Cancelar</Button>
+            <Button variant="primary" icon={KeyRound} onClick={confirmReset}>Restablecer</Button>
           </>
         }
       >
-        <div className="col gap-3">
-          <Field label="Nombre completo" required>
-            <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Nombre y apellidos" />
-          </Field>
-          <Field label="Correo electrónico" required>
-            <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="correo@conexion360.co" />
-          </Field>
-          <Field label="Rol" required>
-            <Select
-              value={form.role}
-              onChange={(e) => setForm({ ...form, role: e.target.value })}
-              options={Object.values(ROLES).map((r) => ({ value: r, label: ROLE_META[r].label }))}
-            />
-          </Field>
-          <Field label="Área / departamento">
-            <Input value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value })} placeholder="Ej: Operaciones" />
-          </Field>
-        </div>
+        {resetting && (
+          <AlertBanner variant="warning">
+            Vas a generar una <b>nueva contraseña temporal</b> para <b>{resetting.name}</b> ({resetting.email}).
+            Su contraseña actual dejará de funcionar de inmediato.
+          </AlertBanner>
+        )}
+      </Modal>
+
+      <Modal
+        open={!!resetDone}
+        onClose={() => setResetDone(null)}
+        title="Contraseña restablecida"
+        footer={<Button variant="primary" onClick={() => setResetDone(null)}>Entendido</Button>}
+      >
+        {resetDone && (
+          <div className="col gap-3">
+            <AlertBanner variant="success" title="Nueva contraseña generada">
+              Comunícasela a la persona por un canal seguro. Podrá cambiarla luego desde su propio menú de usuario.
+            </AlertBanner>
+            <div className="glass-soft" style={{ padding: 14 }}>
+              <div className="stat-row"><span className="muted">Usuario</span><b>{resetDone.email}</b></div>
+              <div className="stat-row"><span className="muted">Contraseña temporal</span><b>{resetDone.password}</b></div>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   )

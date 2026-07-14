@@ -1,22 +1,30 @@
 import { useNavigate } from 'react-router-dom'
-import { BadgeCheck, FileText, CalendarClock, Wallet, Download } from 'lucide-react'
+import { BadgeCheck, FileText, CalendarClock, Wallet, Download, Briefcase } from 'lucide-react'
 import PageHeader from '../../components/common/PageHeader.jsx'
 import { Card, KpiCard } from '../../components/ui/Card.jsx'
 import Button from '../../components/ui/Button.jsx'
 import Badge from '../../components/ui/Badge.jsx'
+import { AlertBanner } from '../../components/ui/Feedback.jsx'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { PERSONNEL } from '../../data/mockPersonnel.js'
-import { formatCOP, formatDate } from '../../utils/format.js'
+import { formatCOP, formatDate, daysBetween } from '../../utils/format.js'
 import { generateLaborCertificate } from '../../utils/pdf.js'
 
 export default function EmployeeDashboard() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const emp = PERSONNEL.find((p) => p.id === user.employeeId) || PERSONNEL[0]
+  const diasRestantes = emp.end ? daysBetween(new Date(), emp.end) : null
 
   return (
     <div className="page">
       <PageHeader title={`Bienvenido(a), ${user.name.split(' ')[0]}`} subtitle="Tu información laboral y autoservicio." />
+
+      {diasRestantes != null && diasRestantes >= 0 && diasRestantes < 30 && (
+        <AlertBanner variant="warning" title="Contrato próximo a vencer">
+          Tu contrato finaliza en {diasRestantes} días ({formatDate(emp.end)}). Coordina la renovación con tu supervisor.
+        </AlertBanner>
+      )}
 
       <div className="grid grid-kpi stagger" style={{ marginBottom: 18 }}>
         <KpiCard label="Cargo" value={emp.position} icon={BadgeCheck} accent="teal" />
@@ -37,6 +45,7 @@ export default function EmployeeDashboard() {
         <Card title="Autoservicio" subtitle="Acciones disponibles">
           <div className="col gap-2">
             <Button variant="primary" icon={Download} className="full" onClick={() => generateLaborCertificate(emp)}>Descargar certificado laboral</Button>
+            <Button variant="ghost" icon={Briefcase} className="full" onClick={() => navigate('/personal/contrato')}>Ver mi contrato</Button>
             <Button variant="ghost" icon={FileText} className="full" onClick={() => navigate('/personal/documentos')}>Ver mis documentos</Button>
           </div>
         </Card>
