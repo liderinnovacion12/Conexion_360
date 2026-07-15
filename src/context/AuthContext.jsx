@@ -10,6 +10,18 @@ const SESSION_TIMEOUT_MIN = Number(import.meta.env.VITE_SESSION_TIMEOUT_MIN || 3
 // false -> comportamiento original con MOCK_USERS + localStorage
 const USE_SUPABASE = DATA_MODE === 'supabase' && isSupabaseConfigured()
 
+// DATA_MODE pide Supabase pero faltan VITE_SUPABASE_URL/ANON_KEY en el build
+// (típico: variables no configuradas en Vercel). Sin este chequeo, login()
+// caía en silencio al modo mock y mostraba "Credenciales inválidas" para
+// cualquier usuario real, ocultando la verdadera causa.
+const SUPABASE_MISCONFIGURED = DATA_MODE === 'supabase' && !isSupabaseConfigured()
+if (SUPABASE_MISCONFIGURED) {
+  console.error(
+    '[Conexión 360] VITE_DATA_MODE=supabase pero faltan VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY en este build. ' +
+      'Configura esas variables en Vercel (Project Settings > Environment Variables) y vuelve a hacer Redeploy.'
+  )
+}
+
 // Convierte una fila de `profiles` (snake_case) a la forma que ya espera
 // el resto de la app (camelCase, igual que los objetos de mockUsers.js).
 function profileToSessionUser(profile) {
@@ -132,6 +144,11 @@ export function AuthProvider({ children }) {
   }, [user, resetIdleTimer])
 
   const login = useCallback(async ({ email, password }) => {
+    if (SUPABASE_MISCONFIGURED) {
+      throw new Error(
+        'Supabase no está configurado en este despliegue (faltan variables de entorno). Contacta al administrador.'
+      )
+    }
     if (USE_SUPABASE) {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) throw new Error('Credenciales inválidas. Verifica tu correo y contraseña.')
