@@ -126,18 +126,20 @@ export default function Login() {
             </p>
           </form>
 
-          <details className="demo-accounts">
-            <summary>Cuentas de demostración (contraseña: <b>Conexion360</b>)</summary>
-            <div className="demo-grid">
-              {users.map((u) => (
-                <button key={u.id} className="demo-chip" onClick={() => quickFill(u)} type="button">
-                  <span className="dot" style={{ background: ROLE_META[u.role].color, color: ROLE_META[u.role].color }} />
-                  <span className="grow">{ROLE_META[u.role].label}</span>
-                  <span className="dim" style={{ fontSize: '0.72rem' }}>{u.email}</span>
-                </button>
-              ))}
-            </div>
-          </details>
+          {import.meta.env.VITE_APP_ENV !== 'production' && (
+            <details className="demo-accounts">
+              <summary>Cuentas de demostración (contraseña: <b>Conexion360</b>)</summary>
+              <div className="demo-grid">
+                {users.map((u) => (
+                  <button key={u.id} className="demo-chip" onClick={() => quickFill(u)} type="button">
+                    <span className="dot" style={{ background: ROLE_META[u.role].color, color: ROLE_META[u.role].color }} />
+                    <span className="grow">{ROLE_META[u.role].label}</span>
+                    <span className="dim" style={{ fontSize: '0.72rem' }}>{u.email}</span>
+                  </button>
+                ))}
+              </div>
+            </details>
+          )}
         </div>
       </div>
     </div>
