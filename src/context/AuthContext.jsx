@@ -40,19 +40,23 @@ function profileToSessionUser(profile) {
 }
 
 async function fetchProfile(userId) {
-  const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single()
+  const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle()
   if (error) throw error
 
-  // Aspirante recién auto-registrado (ver Register.jsx): todavía no tiene
-  // fila en `candidates` ni profiles.candidate_id. La función RPC
-  // `register_candidate_profile` la crea y la enlaza (lee el número de
-  // documento guardado en el metadata del usuario en el signUp). Es
-  // idempotente, así que es seguro llamarla en cada login/restauración de
-  // sesión de un aspirante.
+  // El perfil fue eliminado por un administrador pero el usuario de Auth sigue
+  // existiendo. Cerramos sesión y lanzamos un error legible.
+  if (!data) {
+    await supabase.auth.signOut()
+    throw new Error('Tu cuenta fue eliminada. Regístrate de nuevo para continuar.')
+  }
+
+  // Aspirante recién auto-registrado: todavía no tiene fila en `candidates`
+  // ni profiles.candidate_id. La función RPC `register_candidate_profile`
+  // la crea y la enlaza. Es idempotente.
   if (data.role === 'candidate' && !data.candidate_id) {
     const { error: rpcError } = await supabase.rpc('register_candidate_profile')
     if (!rpcError) {
-      const { data: refreshed } = await supabase.from('profiles').select('*').eq('id', userId).single()
+      const { data: refreshed } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle()
       if (refreshed) return profileToSessionUser(refreshed)
     }
   }

@@ -785,6 +785,23 @@ export async function updateUserProfile(id, patch) {
 // requiere service-role); solo se retira de las listas de la app.
 export async function removeUserProfile(id) {
   must()
+  const { data: sessionData } = await supabase.auth.getSession()
+  const token = sessionData?.session?.access_token
+  if (token) {
+    // Borrar auth user + perfil vía endpoint serverless (requiere service role key).
+    // Esto libera el correo para que la persona pueda re-registrarse desde cero.
+    const res = await fetch('/api/admin-delete-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ userId: id }),
+    })
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}))
+      throw new Error(json.error || 'No se pudo eliminar el usuario.')
+    }
+    return
+  }
+  // Fallback si no hay token (no debería ocurrir en producción)
   const { error } = await supabase.from('profiles').delete().eq('id', id)
   check(error)
 }
