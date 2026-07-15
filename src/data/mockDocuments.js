@@ -3,13 +3,15 @@ export const DOCUMENT_TYPES = [
   { key: 'hv', label: 'Hoja de vida actualizada', required: true },
   { key: 'cedula', label: 'Documento de identidad', required: true },
   { key: 'academico', label: 'Certificados académicos', required: true },
-  { key: 'laboral', label: 'Certificados laborales', required: false },
+  { key: 'laboral', label: 'Certificados laborales', required: true },
   { key: 'profesional', label: 'Tarjeta profesional', required: false },
-  { key: 'seguridad', label: 'Seguridad social (EPS, pensión, ARL)', required: true },
+  { key: 'seguridad', label: 'Seguridad social (EPS, pensión, ARL)', required: false },
   { key: 'bancaria', label: 'Certificación bancaria', required: false },
   { key: 'rut', label: 'RUT', required: false },
   { key: 'vacunacion', label: 'Carnet de vacunación', required: false },
 ]
+
+export const REQUIRED_DOC_KEYS = DOCUMENT_TYPES.filter((d) => d.required).map((d) => d.label)
 
 // Documentos cargados (con trazabilidad / audit trail).
 export const DOCUMENTS = [

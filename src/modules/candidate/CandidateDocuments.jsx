@@ -8,7 +8,7 @@ import Badge from '../../components/ui/Badge.jsx'
 import { AlertBanner } from '../../components/ui/Feedback.jsx'
 import FileDropzone from '../../components/feature/FileDropzone.jsx'
 import { useAuth } from '../../context/AuthContext.jsx'
-import { DOCUMENT_TYPES } from '../../data/mockDocuments.js'
+import { DOCUMENT_TYPES, REQUIRED_DOC_KEYS } from '../../data/mockDocuments.js'
 import { useCandidates } from '../../hooks/useCandidates.js'
 import { useDocuments } from '../../hooks/useDocuments.js'
 import { useFormTemplates } from '../../hooks/useFormTemplates.js'
@@ -21,6 +21,16 @@ const REQUIRED_PROFILE_FIELDS = ['name', 'doc', 'birth', 'address', 'city', 'dep
 function profileComplete(candidate) {
   if (!candidate) return false
   return REQUIRED_PROFILE_FIELDS.every((f) => candidate[f] && String(candidate[f]).trim() !== '')
+}
+
+function authorizationSigned(candidate) {
+  return !!candidate?.dataAuthorizationSignedAt
+}
+
+function requiredDocsUploaded(docs) {
+  return REQUIRED_DOC_KEYS.every((label) =>
+    docs.some((d) => d.type === label && !['devuelto', 'rechazado'].includes(d.status))
+  )
 }
 
 export default function CandidateDocuments() {
@@ -71,13 +81,16 @@ export default function CandidateDocuments() {
     }
   }
 
-  const canUpload = profileComplete(candidate)
+  const hasProfile = profileComplete(candidate)
+  const hasAuth = authorizationSigned(candidate)
+  const canUpload = hasProfile && hasAuth
+  const allRequiredUploaded = requiredDocsUploaded(docs)
 
   return (
     <div className="page">
       <PageHeader title="Mis documentos" subtitle="Carga tus documentos en PDF. Solo se aceptan archivos PDF." />
 
-      {!canUpload && (
+      {!hasProfile && (
         <AlertBanner variant="warning" title="Completa tus datos personales primero">
           Debes llenar todos los campos obligatorios en{' '}
           <a href="/aspirante/perfil" style={{ color: 'inherit', fontWeight: 600, textDecoration: 'underline' }}>
@@ -87,10 +100,26 @@ export default function CandidateDocuments() {
         </AlertBanner>
       )}
 
-      {canUpload && (
-        <AlertBanner variant="info" title="Importante">
-          Los documentos marcados como <b>requeridos</b> son obligatorios para avanzar en el proceso. Si un documento es
-          devuelto, revisa el comentario y vuelve a cargarlo.
+      {hasProfile && !hasAuth && (
+        <AlertBanner variant="warning" title="Firma la autorización de datos primero">
+          Debes aceptar y firmar la{' '}
+          <a href="/aspirante/autorizacion" style={{ color: 'inherit', fontWeight: 600, textDecoration: 'underline' }}>
+            Autorización de tratamiento de datos
+          </a>{' '}
+          antes de poder cargar documentos.
+        </AlertBanner>
+      )}
+
+      {canUpload && !allRequiredUploaded && (
+        <AlertBanner variant="info" title="Documentos requeridos pendientes">
+          Debes cargar: <b>Hoja de vida actualizada</b>, <b>Documento de identidad</b>, <b>Certificados académicos</b>{' '}
+          y <b>Certificados laborales</b> para que tu proceso pueda avanzar.
+        </AlertBanner>
+      )}
+
+      {canUpload && allRequiredUploaded && (
+        <AlertBanner variant="success" title="Documentos requeridos completos">
+          Todos los documentos obligatorios están cargados. Tu proceso puede avanzar.
         </AlertBanner>
       )}
 

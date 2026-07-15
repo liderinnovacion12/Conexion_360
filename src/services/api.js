@@ -77,6 +77,7 @@ const candidateFromRow = (r) => ({
   createdAt: r.created_at,
   docType: r.doc_type, birth: r.birth_date, gender: r.gender, civil: r.marital_status,
   address: r.address, dept: r.department, education: r.education_level,
+  dataAuthorizationSignedAt: r.data_authorization_signed_at,
 })
 
 export async function listCandidates() {
@@ -124,6 +125,7 @@ export async function updateCandidate(id, patch) {
   if ('address' in patch) row.address = patch.address
   if ('dept' in patch) row.department = patch.dept
   if ('education' in patch) row.education_level = patch.education
+  if ('dataAuthorizationSignedAt' in patch) row.data_authorization_signed_at = patch.dataAuthorizationSignedAt
   const { data, error } = await supabase.from('candidates').update(row).eq('id', id).select().single()
   check(error)
   return candidateFromRow(data)

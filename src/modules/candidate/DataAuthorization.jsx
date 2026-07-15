@@ -8,20 +8,34 @@ import { AlertBanner } from '../../components/ui/Feedback.jsx'
 import SignaturePicker from '../../components/feature/SignaturePicker.jsx'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { useMySignatures } from '../../hooks/useMySignatures.js'
+import { useCandidates } from '../../hooks/useCandidates.js'
 import { formatDate } from '../../utils/format.js'
 
 export default function DataAuthorization() {
   const { user } = useAuth()
+  const { candidates, updateCandidate } = useCandidates()
+  const candidate = candidates.find((c) => c.id === user.candidateId)
   const [library, setLibrary] = useMySignatures()
   const [accepted, setAccepted] = useState(false)
   const [signature, setSignature] = useState(null)
-  const [done, setDone] = useState(false)
+  const [saving, setSaving] = useState(false)
   const today = formatDate(new Date())
 
-  const canSubmit = accepted && signature
-  const submit = () => canSubmit && setDone(true)
+  const alreadySigned = !!candidate?.dataAuthorizationSignedAt
+  const signedDate = alreadySigned ? formatDate(new Date(candidate.dataAuthorizationSignedAt)) : today
 
-  if (done) {
+  const canSubmit = accepted && signature && !saving
+  const submit = async () => {
+    if (!canSubmit || !candidate) return
+    setSaving(true)
+    try {
+      await updateCandidate(candidate.id, { dataAuthorizationSignedAt: new Date().toISOString() })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (alreadySigned) {
     return (
       <div className="page">
         <PageHeader title="Autorización de tratamiento de datos" />
@@ -29,12 +43,11 @@ export default function DataAuthorization() {
           <CheckCircle2 size={48} style={{ color: 'var(--success)', margin: '0 auto 12px' }} />
           <h2 className="h2">Autorización firmada</h2>
           <p className="muted" style={{ marginTop: 6 }}>
-            Registramos tu autorización el {today}. Gracias, {user.name}.
+            Registramos tu autorización el {signedDate}. Gracias, {user.name}.
           </p>
           <div className="glass-soft" style={{ padding: 14, marginTop: 16, textAlign: 'left' }}>
             <div className="stat-row"><span className="muted">Titular</span><b>{user.name}</b></div>
-            <div className="stat-row"><span className="muted">Fecha</span><b>{today}</b></div>
-            <div className="stat-row"><span className="muted">Método de firma</span><Badge variant="violet">{signature.type === 'draw' ? 'Dibujada' : signature.type === 'upload' ? 'Imagen' : 'Texto'}</Badge></div>
+            <div className="stat-row"><span className="muted">Fecha</span><b>{signedDate}</b></div>
             <div className="stat-row"><span className="muted">Estado</span><Badge variant="success" dot>Aceptada</Badge></div>
           </div>
         </Card>
@@ -103,7 +116,7 @@ export default function DataAuthorization() {
 
           <div className="row" style={{ justifyContent: 'flex-end', marginTop: 14 }}>
             <Button variant="violet" icon={ShieldCheck} disabled={!canSubmit} onClick={submit}>
-              Firmar autorización
+              {saving ? 'Guardando…' : 'Firmar autorización'}
             </Button>
           </div>
         </Card>
