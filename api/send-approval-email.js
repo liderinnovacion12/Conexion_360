@@ -1,29 +1,18 @@
-// ============================================================
 // Endpoint serverless (Vercel) — envía el correo de "proceso aprobado"
-// a un aspirante cuando el Administrador da la aprobación final.
+// usando Nodemailer con Gmail (sin Resend).
 //
-// Igual que api/admin-update-user.js: valida que quien llama esté
-// autenticado y sea Administrador (contra la tabla `profiles`, nunca
-// contra el cuerpo de la solicitud) antes de hacer nada. La API key de
-// Resend vive SOLO aquí, nunca en el navegador.
-//
-// VARIABLES DE ENTORNO NECESARIAS EN VERCEL (Project Settings >
-// Environment Variables), NO como VITE_*:
+// VARIABLES DE ENTORNO EN VERCEL (sin prefijo VITE_):
 //   SUPABASE_URL              = https://tu-proyecto.supabase.co
-//   SUPABASE_SERVICE_ROLE_KEY = tu service role key (secreta)
-//   RESEND_API_KEY            = tu API key de resend.com (secreta)
-//   RESEND_FROM (opcional)    = remitente verificado, ej:
-//                               "Conexión 360 <notificaciones@tudominio.co>"
-//                               Si no lo configuras, usa el remitente de
-//                               pruebas de Resend (onboarding@resend.dev),
-//                               válido solo para probar, no para producción real.
-// ============================================================
+//   SUPABASE_SERVICE_ROLE_KEY = service role key de Supabase
+//   GMAIL_USER                = tucorreo@gmail.com
+//   GMAIL_APP_PASSWORD        = contraseña de aplicación de Gmail (16 chars)
 import { createClient } from '@supabase/supabase-js'
+import nodemailer from 'nodemailer'
 
 const SUPABASE_URL = process.env.SUPABASE_URL
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
-const RESEND_API_KEY = process.env.RESEND_API_KEY
-const RESEND_FROM = process.env.RESEND_FROM || 'Conexión 360 <onboarding@resend.dev>'
+const GMAIL_USER = process.env.GMAIL_USER
+const GMAIL_PASS = process.env.GMAIL_APP_PASSWORD
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -34,15 +23,13 @@ export default async function handler(req, res) {
   if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
     return res.status(500).json({ error: 'Falta configurar SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY en el servidor.' })
   }
-  if (!RESEND_API_KEY) {
-    return res.status(500).json({ error: 'Falta configurar RESEND_API_KEY en el servidor.' })
+  if (!GMAIL_USER || !GMAIL_PASS) {
+    return res.status(500).json({ error: 'Falta configurar GMAIL_USER / GMAIL_APP_PASSWORD en el servidor.' })
   }
 
   const authHeader = req.headers.authorization || ''
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null
-  if (!token) {
-    return res.status(401).json({ error: 'Falta el token de autorización.' })
-  }
+  if (!token) return res.status(401).json({ error: 'Falta el token de autorización.' })
 
   const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
     auth: { autoRefreshToken: false, persistSession: false },
@@ -68,9 +55,7 @@ export default async function handler(req, res) {
     try { body = JSON.parse(body) } catch { body = {} }
   }
   const { email, name } = body || {}
-  if (!email) {
-    return res.status(400).json({ error: 'Falta el correo del aspirante.' })
-  }
+  if (!email) return res.status(400).json({ error: 'Falta el correo del aspirante.' })
 
   const firstName = (name || '').trim().split(' ')[0] || ''
 
@@ -82,24 +67,17 @@ export default async function handler(req, res) {
     </div>
   `
 
-  const resp = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${RESEND_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      from: RESEND_FROM,
-      to: [email],
-      subject: 'Tu proceso ha sido aprobado — Conexión 360',
-      html,
-    }),
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: { user: GMAIL_USER, pass: GMAIL_PASS },
   })
 
-  const result = await resp.json().catch(() => ({}))
-  if (!resp.ok) {
-    return res.status(400).json({ error: result.message || 'No se pudo enviar el correo.' })
-  }
+  await transporter.sendMail({
+    from: `"Conexión 360" <${GMAIL_USER}>`,
+    to: email,
+    subject: 'Tu proceso ha sido aprobado — Conexión 360',
+    html,
+  })
 
-  return res.status(200).json({ success: true, id: result.id })
+  return res.status(200).json({ success: true })
 }
