@@ -880,7 +880,15 @@ export async function sendApprovalEmail({ email, name }) {
     body: JSON.stringify({ email, name }),
   })
 
-  const body = await res.json().catch(() => ({}))
-  if (!res.ok) throw new Error(body.error || 'No se pudo enviar el correo.')
+  const raw = await res.text()
+  let body = {}
+  try { body = raw ? JSON.parse(raw) : {} } catch { /* respuesta no era JSON */ }
+
+  if (!res.ok) {
+    if (res.status === 404) {
+      throw new Error('El endpoint /api/send-approval-email no existe en este entorno. Las funciones serverless solo corren cuando la app está desplegada en Vercel (no en "npm run dev" local).')
+    }
+    throw new Error(body.error || raw?.slice(0, 200) || `No se pudo enviar el correo (HTTP ${res.status}).`)
+  }
   return body
 }
