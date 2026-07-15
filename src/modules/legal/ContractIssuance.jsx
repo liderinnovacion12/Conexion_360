@@ -17,17 +17,12 @@ import { useLegalTemplates } from '../../hooks/useLegalTemplates.js'
 import { useContracts } from '../../hooks/useContracts.js'
 import { useApprovals } from '../../hooks/useApprovals.js'
 import { useUsers } from '../../hooks/useUsers.js'
-import { PERSONNEL } from '../../data/mockPersonnel.js'
-import { CANDIDATES } from '../../data/mockCandidates.js'
-import { AREA_APPROVERS } from '../../data/mockApprovals.js'
+import { usePersonnel } from '../../hooks/usePersonnel.js'
+import { useCandidates } from '../../hooks/useCandidates.js'
+import { useAreaApprovers } from '../../hooks/useAreaApprovers.js'
 import { formatDate, formatDateTime } from '../../utils/format.js'
 import { nextConsecutive, formatConsecutive, verificationCode } from '../../utils/documents.js'
 import { exportNodeToPdf } from '../../utils/pdf.js'
-
-const PEOPLE = [
-  ...PERSONNEL.map((p) => ({ id: `p:${p.id}`, name: p.name, doc: p.doc, cargo: p.position, area: p.area })),
-  ...CANDIDATES.map((c) => ({ id: `c:${c.id}`, name: c.name, doc: c.doc, cargo: c.position, area: 'Aspirante' })),
-]
 
 function fillTemplate(body, values) {
   return body.replace(/\{\{(\w+)\}\}/g, (_, key) => values[key] || `[${key}]`)
@@ -43,7 +38,15 @@ export default function ContractIssuance() {
   const { addContract } = useContracts()
   const { submitForApproval } = useApprovals()
   const { users } = useUsers()
+  const { personnel: PERSONNEL } = usePersonnel()
+  const { candidates: CANDIDATES } = useCandidates()
+  const { areaApprovers: AREA_APPROVERS } = useAreaApprovers()
   const [library, setLibrary] = useMySignatures()
+
+  const PEOPLE = useMemo(() => [
+    ...PERSONNEL.map((p) => ({ id: `p:${p.id}`, name: p.name, doc: p.doc, cargo: p.position, area: p.area })),
+    ...CANDIDATES.map((c) => ({ id: `c:${c.id}`, name: c.name, doc: c.doc, cargo: c.position, area: 'Aspirante' })),
+  ], [PERSONNEL, CANDIDATES])
 
   const [personId, setPersonId] = useState('')
   const [templateId, setTemplateId] = useState('')
@@ -78,7 +81,7 @@ export default function ContractIssuance() {
   const filledBody = template ? fillTemplate(template.body, values) : ''
   const canSubmit = person && template && signature && !submitted && canSignDocs
 
-  const submit = () => {
+  const submit = async () => {
     if (!canSubmit) return
     setConfirmSubmit(false)
     const consecutive = nextConsecutive()
@@ -86,7 +89,7 @@ export default function ContractIssuance() {
     const code = verificationCode({ personId, templateId, filledBody, signerName: user.name, consecutive, date })
     const creatorSeal = { consecutive, date, code, signature, signerName: user.name, signerRole: 'Área Jurídica' }
 
-    const contract = addContract({
+    const contract = await addContract({
       templateId: template.id,
       templateName: template.name,
       personId,
@@ -107,7 +110,7 @@ export default function ContractIssuance() {
     const approverId = AREA_APPROVERS['Jurídica / Contratos']
     const approver = users.find((u) => u.id === approverId)
 
-    const approval = submitForApproval({
+    const approval = await submitForApproval({
       domain: 'contract',
       refId: contract.id,
       title: `${template.name} — ${person.name}`,

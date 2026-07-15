@@ -20,10 +20,10 @@ export default function Clients() {
 
   const openCreate = () => { setEditing(null); setForm(emptyForm); setOpen(true) }
   const openEdit = (c) => { setEditing(c); setForm(c); setOpen(true) }
-  const save = () => {
+  const save = async () => {
     if (!form.name.trim() || !form.nit.trim()) return
-    if (editing) updateClient(editing.id, form)
-    else addClient(form)
+    if (editing) await updateClient(editing.id, form)
+    else await addClient(form)
     setOpen(false)
   }
 

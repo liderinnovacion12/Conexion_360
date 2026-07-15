@@ -7,6 +7,14 @@
 
 /* ---------- Sidebar ---------- */
 .sidebar {
+  /* La barra lateral mantiene un fondo oscuro fijo como color de marca,
+     así que su texto también debe fijarse a tonos claros (los del tema
+     oscuro) sin importar el tema activo; si no, en modo claro hereda
+     --text/--text-soft/--text-dim oscuros y queda casi ilegible. */
+  --text: #eaf0ff;
+  --text-soft: #aeb9d6;
+  --text-dim: #6b7793;
+  color: var(--text);
   width: var(--sidebar-w);
   flex-shrink: 0;
   position: sticky;
@@ -104,6 +112,30 @@
 .notif-item { display: flex; gap: 11px; padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,0.05); }
 .notif-item:hover { background: var(--surface); }
 .notif-dot { width: 9px; height: 9px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+
+/* ---------- Aviso flotante (nuevo en vivo) ---------- */
+.notif-toast {
+  position: fixed; top: 20px; right: 20px; z-index: 200;
+  display: flex; align-items: flex-start; gap: 12px;
+  width: min(360px, calc(100vw - 32px));
+  padding: 14px 14px 14px 12px;
+  border-radius: var(--r-lg);
+  background: var(--panel-strong);
+  border: 1px solid var(--glass-border-strong);
+  box-shadow: var(--shadow-lg);
+  animation: notifToastIn 0.25s ease;
+}
+.notif-toast-icon {
+  width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
+  display: grid; place-items: center;
+}
+.notif-toast-body { flex: 1; min-width: 0; cursor: pointer; }
+.notif-toast-title { font-weight: 600; font-size: 0.88rem; color: var(--text); }
+.notif-toast-text { font-size: 0.8rem; color: var(--text-soft); margin-top: 2px; }
+@keyframes notifToastIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
 .menu-toggle { display: none; }
 

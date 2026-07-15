@@ -8,8 +8,9 @@ import Badge from '../../components/ui/Badge.jsx'
 import { AlertBanner } from '../../components/ui/Feedback.jsx'
 import FileDropzone from '../../components/feature/FileDropzone.jsx'
 import { useAuth } from '../../context/AuthContext.jsx'
-import { DOCUMENTS, DOCUMENT_TYPES } from '../../data/mockDocuments.js'
-import { CANDIDATES } from '../../data/mockCandidates.js'
+import { DOCUMENT_TYPES } from '../../data/mockDocuments.js'
+import { useCandidates } from '../../hooks/useCandidates.js'
+import { useDocuments } from '../../hooks/useDocuments.js'
 import { useFormTemplates } from '../../hooks/useFormTemplates.js'
 import { useCandidateGroups } from '../../hooks/useCandidateGroups.js'
 import { resolveRequiredFields } from '../../utils/formTemplates.js'
@@ -18,12 +19,14 @@ import { docStatusVariant, formatDateTime } from '../../utils/format.js'
 export default function CandidateDocuments() {
   const { user } = useAuth()
   const cid = user.candidateId
-  const candidate = CANDIDATES.find((c) => c.id === cid)
+  const { candidates } = useCandidates()
+  const candidate = candidates.find((c) => c.id === cid)
   const { templates } = useFormTemplates()
   const { groupsForCandidate } = useCandidateGroups()
-  const [docs, setDocs] = useState(DOCUMENTS.filter((d) => d.candidateId === cid))
+  const { documents: docs, uploadDocument } = useDocuments(cid)
   const [upFor, setUpFor] = useState(null)
   const [file, setFile] = useState(null)
+  const [submitting, setSubmitting] = useState(false)
 
   // Documentos requeridos según la plantilla vigente para la vía y los
   // grupos del aspirante (en vez de la lista fija anterior).
@@ -37,26 +40,28 @@ export default function CandidateDocuments() {
     return { ...t, doc: existing }
   })
 
-  const submitUpload = () => {
-    if (!file) return
-    const label = upFor.label
-    setDocs((ds) => {
-      const idx = ds.findIndex((d) => d.type === label)
-      const base = {
-        id: `d-${Date.now()}`, candidateId: cid, type: label, status: 'pendiente',
-        required: upFor.required, visibility: 'ambos', uploadedBy: user.name,
-        uploadedAt: new Date().toISOString(), reviewedBy: null, reviewedAt: null,
-        comment: '', version: 1, expires: null, file: file.name,
-      }
-      if (idx >= 0) {
-        const copy = [...ds]
-        copy[idx] = { ...copy[idx], status: 'pendiente', file: file.name, uploadedAt: new Date().toISOString(), version: copy[idx].version + 1, comment: '' }
-        return copy
-      }
-      return [...ds, base]
-    })
-    setUpFor(null)
-    setFile(null)
+  const submitUpload = async () => {
+    if (!file || !upFor) return
+    setSubmitting(true)
+    try {
+      await uploadDocument({
+        candidateId: cid,
+        type: upFor.label,
+        required: upFor.required,
+        visibility: 'ambos',
+        uploadedByName: user.name,
+        file,
+        existingVersion: upFor.doc?.version || 0,
+      })
+      setUpFor(null)
+      setFile(null)
+    } catch (err) {
+      // El AlertBanner de arriba explica el requisito; si falla la subida
+      // (ej. sin conexión), dejamos el modal abierto para reintentar.
+      alert(err.message || 'No se pudo cargar el documento. Intenta de nuevo.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -116,7 +121,7 @@ export default function CandidateDocuments() {
         open={!!upFor}
         onClose={() => setUpFor(null)}
         title={`Cargar: ${upFor?.label || ''}`}
-        footer={<><Button variant="ghost" onClick={() => setUpFor(null)}>Cancelar</Button><Button variant="primary" disabled={!file} onClick={submitUpload}>Enviar documento</Button></>}
+        footer={<><Button variant="ghost" onClick={() => setUpFor(null)}>Cancelar</Button><Button variant="primary" disabled={!file || submitting} onClick={submitUpload}>{submitting ? 'Subiendo…' : 'Enviar documento'}</Button></>}
       >
         <FileDropzone onFile={setFile} />
       </Modal>

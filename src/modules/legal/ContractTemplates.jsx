@@ -32,10 +32,10 @@ export default function ContractTemplates() {
     setEditorKey((k) => k + 1)
     setOpen(true)
   }
-  const save = () => {
+  const save = async () => {
     if (!form.name.trim()) return
-    if (editing) updateTemplate(editing.id, form)
-    else addTemplate({ ...form, key: form.name.toLowerCase().replace(/\s+/g, '_'), placeholders: extractPlaceholders(form.body) })
+    if (editing) await updateTemplate(editing.id, form)
+    else await addTemplate({ ...form, key: form.name.toLowerCase().replace(/\s+/g, '_'), placeholders: extractPlaceholders(form.body) })
     setOpen(false)
   }
 

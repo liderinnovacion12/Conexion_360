@@ -26,21 +26,21 @@ export default function CandidateCourses() {
 
   const progressOf = (id) => progress.find((p) => p.candidateId === cid && p.courseId === id)
 
-  const startEval = (course) => {
+  const startEval = async (course) => {
     setEvalFor(course)
-    setQuiz(getQuiz(course.id))
+    setQuiz(await getQuiz(course.id))
     setAnswers({})
     setEvidence(null)
     setResult(null)
   }
 
-  const submitEval = () => {
+  const submitEval = async () => {
     // Cálculo automático de puntaje (preguntas con respuesta correcta conocida).
     const gradable = quiz.filter((q) => q.answer !== null && q.answer !== undefined)
     const correct = gradable.filter((q) => String(answers[q.id]) === String(q.answer)).length
     const score = gradable.length ? Math.round((correct / gradable.length) * 100) : 0
     const passed = score >= (evalFor.passScore || 70)
-    recordProgress(cid, evalFor.id, { progress: 100, score, status: passed ? 'aprobado' : 'reprobado' })
+    await recordProgress(cid, evalFor.id, { progress: 100, score, status: passed ? 'aprobado' : 'reprobado' })
     setResult({ score, passed, course: evalFor.title })
   }
 

@@ -1,32 +1,119 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react'
 import { findUserByCredentials, setUserPassword } from '../data/mockUsers.js'
+import { supabase, DATA_MODE, isSupabaseConfigured } from '../services/supabaseClient.js'
 
 const AuthContext = createContext(null)
 const STORAGE_KEY = 'cx360.session'
 const SESSION_TIMEOUT_MIN = Number(import.meta.env.VITE_SESSION_TIMEOUT_MIN || 30)
+
+// true  -> lee/escribe en Supabase Auth + tabla `profiles`
+// false -> comportamiento original con MOCK_USERS + localStorage
+const USE_SUPABASE = DATA_MODE === 'supabase' && isSupabaseConfigured()
+
+// Convierte una fila de `profiles` (snake_case) a la forma que ya espera
+// el resto de la app (camelCase, igual que los objetos de mockUsers.js).
+function profileToSessionUser(profile) {
+  if (!profile) return null
+  return {
+    id: profile.id,
+    name: profile.name,
+    email: profile.email,
+    role: profile.role,
+    avatar: profile.avatar,
+    area: profile.area,
+    candidateId: profile.candidate_id || undefined,
+    employeeId: profile.employee_id || undefined,
+    clientCompany: profile.client_company || undefined,
+  }
+}
+
+async function fetchProfile(userId) {
+  const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single()
+  if (error) throw error
+
+  // Aspirante recién auto-registrado (ver Register.jsx): todavía no tiene
+  // fila en `candidates` ni profiles.candidate_id. La función RPC
+  // `register_candidate_profile` la crea y la enlaza (lee el número de
+  // documento guardado en el metadata del usuario en el signUp). Es
+  // idempotente, así que es seguro llamarla en cada login/restauración de
+  // sesión de un aspirante.
+  if (data.role === 'candidate' && !data.candidate_id) {
+    const { error: rpcError } = await supabase.rpc('register_candidate_profile')
+    if (!rpcError) {
+      const { data: refreshed } = await supabase.from('profiles').select('*').eq('id', userId).single()
+      if (refreshed) return profileToSessionUser(refreshed)
+    }
+  }
+
+  return profileToSessionUser(data)
+}
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const timer = useRef(null)
 
-  // Restaurar sesión persistida (simulación; en producción => Supabase session)
+  // Restaurar sesión al cargar la app.
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY)
-      if (raw) setUser(JSON.parse(raw))
-    } catch {
-      /* noop */
+    let active = true
+
+    async function restore() {
+      if (USE_SUPABASE) {
+        const { data } = await supabase.auth.getSession()
+        const session = data?.session
+        if (session?.user) {
+          try {
+            const profileUser = await fetchProfile(session.user.id)
+            if (active) setUser(profileUser)
+          } catch {
+            if (active) setUser(null)
+          }
+        }
+      } else {
+        // Igual que en modo Supabase: no restaurar una sesión anterior al
+        // abrir/recargar la app, siempre debe pedirse login de nuevo.
+        localStorage.removeItem(STORAGE_KEY)
+      }
+      if (active) setLoading(false)
     }
-    setLoading(false)
+
+    restore()
+
+    // En modo Supabase, mantenemos la sesión sincronizada ante refresh de
+    // token o cierre de sesión desde otra pestaña.
+    let subscription
+    if (USE_SUPABASE) {
+      const { data } = supabase.auth.onAuthStateChange(async (_event, session) => {
+        if (!session?.user) {
+          if (active) setUser(null)
+          return
+        }
+        try {
+          const profileUser = await fetchProfile(session.user.id)
+          if (active) setUser(profileUser)
+        } catch {
+          if (active) setUser(null)
+        }
+      })
+      subscription = data?.subscription
+    }
+
+    return () => {
+      active = false
+      subscription?.unsubscribe()
+    }
   }, [])
 
   const logout = useCallback(() => {
+    if (USE_SUPABASE) {
+      supabase.auth.signOut()
+    } else {
+      localStorage.removeItem(STORAGE_KEY)
+    }
     setUser(null)
-    localStorage.removeItem(STORAGE_KEY)
   }, [])
 
-  // Cierre de sesión automático por inactividad
+  // Cierre de sesión automático por inactividad (igual en ambos modos).
   const resetIdleTimer = useCallback(() => {
     if (timer.current) clearTimeout(timer.current)
     if (!user) return
@@ -45,7 +132,15 @@ export function AuthProvider({ children }) {
   }, [user, resetIdleTimer])
 
   const login = useCallback(async ({ email, password }) => {
-    // Punto de integración: aquí se llamaría supabase.auth.signInWithPassword
+    if (USE_SUPABASE) {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) throw new Error('Credenciales inválidas. Verifica tu correo y contraseña.')
+      const profileUser = await fetchProfile(data.user.id)
+      setUser(profileUser)
+      return profileUser
+    }
+
+    // Modo mock (sin backend): igual que el prototipo original.
     await new Promise((r) => setTimeout(r, 450))
     const found = findUserByCredentials(email, password)
     if (!found) throw new Error('Credenciales inválidas. Verifica tu correo y contraseña.')
@@ -56,18 +151,62 @@ export function AuthProvider({ children }) {
     return session
   }, [])
 
+  // Auto-registro de aspirantes (ver src/pages/Register.jsx). Solo
+  // disponible en modo Supabase real: crea la cuenta en Auth con la
+  // contraseña que la persona eligió; el trigger handle_new_auth_user
+  // crea su `profiles` (role: candidate) y, en el primer login (o de
+  // inmediato si el proyecto no exige confirmar el correo),
+  // `register_candidate_profile()` crea su fila en `candidates` y la
+  // enlaza. Ver fetchProfile() más arriba.
+  const register = useCallback(async ({ name, doc, email, password }) => {
+    if (!USE_SUPABASE) {
+      throw new Error('El registro de aspirantes requiere el backend de Supabase conectado.')
+    }
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { name, role: 'candidate', area: 'Proceso de selección', doc } },
+    })
+    if (error) throw error
+
+    if (data.session && data.user) {
+      // Confirmación de correo desactivada en el proyecto: ya hay sesión
+      // activa. onAuthStateChange (arriba) también la recogerá, pero la
+      // resolvemos aquí de una vez para no depender del timing del evento.
+      const profileUser = await fetchProfile(data.user.id)
+      setUser(profileUser)
+      return { needsEmailConfirmation: false }
+    }
+    return { needsEmailConfirmation: true }
+  }, [])
+
   const changePassword = useCallback(
-    (currentPassword, newPassword) => {
+    async (currentPassword, newPassword) => {
       if (!user) throw new Error('No hay una sesión activa.')
+      if (!newPassword || newPassword.length < 4) {
+        throw new Error('La nueva contraseña debe tener al menos 4 caracteres.')
+      }
+
+      if (USE_SUPABASE) {
+        // Reautentica con la contraseña actual antes de cambiarla.
+        const { error: reauthError } = await supabase.auth.signInWithPassword({
+          email: user.email,
+          password: currentPassword,
+        })
+        if (reauthError) throw new Error('La contraseña actual no es correcta.')
+        const { error } = await supabase.auth.updateUser({ password: newPassword })
+        if (error) throw error
+        return
+      }
+
       const check = findUserByCredentials(user.email, currentPassword)
       if (!check || check.id !== user.id) throw new Error('La contraseña actual no es correcta.')
-      if (!newPassword || newPassword.length < 4) throw new Error('La nueva contraseña debe tener al menos 4 caracteres.')
       setUserPassword(user.id, newPassword)
     },
     [user]
   )
 
-  const value = { user, loading, login, logout, changePassword, isAuthenticated: !!user }
+  const value = { user, loading, login, logout, register, changePassword, isAuthenticated: !!user }
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 

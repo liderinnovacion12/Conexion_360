@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { UserPlus, Mail, Check, X } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { UserPlus, Mail, Check, X, ShieldCheck, Send } from 'lucide-react'
 import PageHeader from '../../components/common/PageHeader.jsx'
 import { Card } from '../../components/ui/Card.jsx'
 import DataTable from '../../components/ui/DataTable.jsx'
@@ -9,17 +9,38 @@ import Badge from '../../components/ui/Badge.jsx'
 import { ProgressBar } from '../../components/ui/Badge.jsx'
 import { Field, Input, Select } from '../../components/ui/Form.jsx'
 import { AlertBanner, Tabs } from '../../components/ui/Feedback.jsx'
-import { CANDIDATES, STATUS_VARIANT } from '../../data/mockCandidates.js'
+import SignaturePicker from '../../components/feature/SignaturePicker.jsx'
+import SignatureSeal from '../../components/feature/SignatureSeal.jsx'
+import ReAuthModal from '../../components/feature/ReAuthModal.jsx'
+import { STATUS_VARIANT } from '../../data/mockCandidates.js'
 import { stageLabel } from '../../data/pipeline.js'
-import { formatDate } from '../../utils/format.js'
+import { formatDate, formatDateTime } from '../../utils/format.js'
 import { exportToCSV } from '../../utils/pdf.js'
+import { nextConsecutive, verificationCode } from '../../utils/documents.js'
 import { useCandidateGroups } from '../../hooks/useCandidateGroups.js'
 import { useTracks } from '../../hooks/useTracks.js'
+import { useCandidates } from '../../hooks/useCandidates.js'
+import { useAuth } from '../../context/AuthContext.jsx'
+import { usePermissions } from '../../context/PermissionsContext.jsx'
+import { useMySignatures } from '../../hooks/useMySignatures.js'
+import { useApprovals } from '../../hooks/useApprovals.js'
+import { useUsers } from '../../hooks/useUsers.js'
+import { useAreaApprovers } from '../../hooks/useAreaApprovers.js'
 
 const NEW_TRACK_VALUE = '__new_track__'
 
+const APR_VARIANT = { pendiente: 'warning', aprobado: 'success', rechazado: 'danger' }
+
 export default function CandidatesAdmin() {
-  const [rows, setRows] = useState(CANDIDATES)
+  const { candidates: rows, addCandidate } = useCandidates()
+  const { user } = useAuth()
+  const { hasCapability } = usePermissions()
+  const canSignApproval = hasCapability(user?.id, 'canSign')
+  const [library, setLibrary] = useMySignatures()
+  const { approvals, submitForApproval, listByDomain } = useApprovals()
+  const { users } = useUsers()
+  const { areaApprovers: AREA_APPROVERS } = useAreaApprovers()
+
   const [track, setTrack] = useState('todos')
   const [open, setOpen] = useState(false)
   const [created, setCreated] = useState(null)
@@ -28,6 +49,14 @@ export default function CandidatesAdmin() {
   const { groupsForCandidate } = useCandidateGroups()
   const { tracks, addTrack, trackLabel } = useTracks()
 
+  const [approving, setApproving] = useState(null) // candidato activo en el modal
+  const [signature, setSignature] = useState(null)
+  const [confirmSend, setConfirmSend] = useState(false)
+  const [sendError, setSendError] = useState('')
+
+  const candidateApprovals = useMemo(() => listByDomain('candidate'), [approvals])
+  const approvalFor = (candidateId) => candidateApprovals.find((a) => a.refId === candidateId)
+
   const confirmNewTrack = () => {
     if (!newTrackName.trim()) return
     const createdTrack = addTrack(newTrackName.trim())
@@ -35,22 +64,62 @@ export default function CandidatesAdmin() {
     setNewTrackName('')
   }
 
-  const create = () => {
+  const create = async () => {
     if (!form.name || !form.email || form.track === NEW_TRACK_VALUE) return
-    const newCand = {
-      ...form,
-      id: `c-${Date.now()}`,
-      stage: 'registro',
-      status: 'pendiente',
-      progress: 5,
-      createdAt: new Date().toISOString().slice(0, 10),
-    }
-    setRows((r) => [newCand, ...r])
+    await addCandidate(form)
     setCreated({ email: form.email, password: 'Temp#2025' })
     setForm({ name: '', doc: '', email: '', phone: '', position: '', city: '', track: 'funcionario' })
   }
 
-  const filtered = track === 'todos' ? rows : rows.filter((c) => c.track === track)
+  const openApprove = (c) => {
+    setApproving(c)
+    setSignature(null)
+    setSendError('')
+  }
+  const closeApprove = () => {
+    setApproving(null)
+    setSignature(null)
+    setConfirmSend(false)
+    setSendError('')
+  }
+
+  const sendToApproval = async () => {
+    if (!approving || !signature) return
+    setConfirmSend(false)
+    try {
+      const consecutive = nextConsecutive()
+      const date = new Date().toISOString()
+      const code = verificationCode({ candidateId: approving.id, signerName: user.name, consecutive, date })
+      const creatorSeal = { consecutive, date, code, signature, signerName: user.name, signerRole: 'Reclutamiento' }
+
+      const approverId = AREA_APPROVERS['Dirección General']
+      const approver = users.find((u) => u.id === approverId)
+
+      await submitForApproval({
+        domain: 'candidate',
+        refId: approving.id,
+        title: `Aprobación de aspirante — ${approving.name}`,
+        area: 'Talento Humano',
+        requestedById: user.id,
+        requestedBy: user.name,
+        requestedByRole: 'Reclutamiento',
+        creatorSeal,
+        chain: [{ id: approverId, name: approver?.name || 'Administrador', role: 'Administrador', area: 'Dirección General' }],
+      })
+
+      closeApprove()
+    } catch (err) {
+      setSendError(err?.message || 'No se pudo enviar el aspirante a aprobación. Intenta de nuevo.')
+    }
+  }
+
+  const isFullyApproved = (candidateId) => approvalFor(candidateId)?.status === 'aprobado'
+
+  const byTrack = track === 'todos' ? rows : rows.filter((c) => c.track === track)
+  // En la vía "Funcionarios" solo deben aparecer quienes ya completaron
+  // las dos firmas (preaprobación de Reclutamiento + aprobación final
+  // del Administrador).
+  const filtered = track === 'funcionario' ? byTrack.filter((c) => isFullyApproved(c.id)) : byTrack
 
   const columns = [
     {
@@ -78,7 +147,29 @@ export default function CandidatesAdmin() {
     { key: 'stage', header: 'Etapa', render: (c) => <Badge variant="info">{stageLabel(c.stage)}</Badge> },
     { key: 'progress', header: 'Avance', sortValue: (c) => c.progress, render: (c) => <div style={{ width: 110 }}><ProgressBar value={c.progress} /></div> },
     { key: 'status', header: 'Estado', render: (c) => <Badge variant={STATUS_VARIANT[c.status]} dot>{c.status}</Badge> },
+    {
+      key: 'approval', header: 'Aprobación aspirante', sortable: false,
+      render: (c) => {
+        const a = approvalFor(c.id)
+        if (!a) return <span className="dim">Sin enviar</span>
+        if (a.status === 'rechazado') return <Badge variant="danger" dot>Devuelto por Admin</Badge>
+        return <Badge variant={APR_VARIANT[a.status]} dot>{a.status === 'pendiente' ? 'Pendiente Admin' : a.status}</Badge>
+      },
+    },
     { key: 'createdAt', header: 'Creado', render: (c) => formatDate(c.createdAt), sortValue: (c) => new Date(c.createdAt).getTime() },
+    {
+      key: 'actions', header: '', sortable: false,
+      render: (c) => {
+        const a = approvalFor(c.id)
+        // Se puede (re)enviar si nunca se ha enviado, o si Admin lo devolvió.
+        if (a && a.status !== 'rechazado') return null
+        return (
+          <Button size="sm" variant="ghost" icon={Send} onClick={() => openApprove(c)}>
+            {a ? 'Volver a enviar' : 'Preaprobar'}
+          </Button>
+        )
+      },
+    },
   ]
 
   return (
@@ -174,6 +265,70 @@ export default function CandidatesAdmin() {
           </div>
         )}
       </Modal>
+
+      <Modal
+        open={!!approving}
+        onClose={closeApprove}
+        title="Preaprobar aspirante"
+        footer={
+          <>
+            <Button variant="ghost" onClick={closeApprove}>Cancelar</Button>
+            <Button
+              variant="violet"
+              icon={Send}
+              disabled={!signature || !canSignApproval}
+              onClick={() => setConfirmSend(true)}
+              title={!canSignApproval ? 'Sin permiso para firmar' : undefined}
+            >
+              Firmar y enviar a Admin
+            </Button>
+          </>
+        }
+      >
+        {approving && (
+          <div className="col gap-3">
+            <div className="glass-soft" style={{ padding: 14 }}>
+              <div className="stat-row"><span className="muted">Aspirante</span><b>{approving.name}</b></div>
+              <div className="stat-row"><span className="muted">Documento</span><b>{approving.doc || '—'}</b></div>
+              <div className="stat-row"><span className="muted">Cargo</span><b>{approving.position || '—'}</b></div>
+              <div className="stat-row"><span className="muted">Etapa</span><Badge variant="info">{stageLabel(approving.stage)}</Badge></div>
+            </div>
+            <AlertBanner variant="info">
+              Al firmar, este aspirante se envía a <b>Administración</b> para su aprobación final. Cuando el
+              Administrador apruebe, al aspirante le llegará un correo indicando que su proceso fue aprobado.
+            </AlertBanner>
+            {approvalFor(approving.id)?.status === 'rechazado' && (
+              <AlertBanner variant="warning" title="Devuelto por Administración">
+                {approvalFor(approving.id)?.chain?.[0]?.comment || 'No se dejó un comentario.'}
+              </AlertBanner>
+            )}
+            {!canSignApproval && (
+              <AlertBanner variant="warning">Tu rol no tiene permiso para firmar. Pide al Admin que lo habilite en Permisos.</AlertBanner>
+            )}
+            {sendError && <AlertBanner variant="danger">{sendError}</AlertBanner>}
+            <div>
+              <div className="card-sub" style={{ marginBottom: 8 }}>Tu firma</div>
+              <SignaturePicker library={library} setLibrary={setLibrary} active={signature} onSelect={setSignature} />
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      <ReAuthModal
+        open={confirmSend}
+        onClose={() => setConfirmSend(false)}
+        actionLabel="Confirmar y firmar"
+        message="¿Seguro que quieres preaprobar este aspirante y enviarlo a Administración? Reingresa tu contraseña para estampar tu firma."
+        onConfirm={sendToApproval}
+        preview={
+          approving && (
+            <div className="col gap-3">
+              <b style={{ display: 'block', fontSize: '0.9rem' }}>{approving.name} — {approving.position || 'Aspirante'}</b>
+              <SignatureSeal signature={signature} signerName={user?.name} signerRole="Reclutamiento" signed={null} />
+            </div>
+          )
+        }
+      />
     </div>
   )
 }

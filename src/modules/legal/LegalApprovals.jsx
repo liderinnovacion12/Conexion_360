@@ -6,8 +6,8 @@ import { useContracts } from '../../hooks/useContracts.js'
 export default function LegalApprovals() {
   const { contracts, updateContractStatus } = useContracts()
 
-  const handleApproved = (item) => {
-    updateContractStatus(item.refId, 'aprobado')
+  const handleApproved = async (item) => {
+    await updateContractStatus(item.refId, 'aprobado')
   }
 
   const renderPreview = (item) => {

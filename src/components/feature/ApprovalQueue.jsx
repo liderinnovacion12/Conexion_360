@@ -23,7 +23,7 @@ const STATUS_VARIANT = { pendiente: 'warning', aprobado: 'success', rechazado: '
 // documentos...). El documento se enruta por una CADENA de personas, una a
 // la vez — cada firma exige re-autenticación (usuario y clave) antes de
 // estampar el sello, para evitar falsificaciones.
-export default function ApprovalQueue({ domain, renderPreview, onApproved }) {
+export default function ApprovalQueue({ domain, renderPreview, onApproved, onRejected, rejectLabel = 'Rechazar', rejectConfirmMessage }) {
   const { user } = useAuth()
   const { hasCapability } = usePermissions()
   const canApproveDocs = hasCapability(user?.id, 'canApprove')
@@ -51,19 +51,20 @@ export default function ApprovalQueue({ domain, renderPreview, onApproved }) {
     setReAuthFor(null)
   }
 
-  const doApprove = () => {
+  const doApprove = async () => {
     const consecutive = nextConsecutive()
     const date = new Date().toISOString()
     const code = verificationCode({ approvalId: active.id, signerName: user.name, consecutive, date })
     const isLastStep = currentStepIndex(active) === active.chain.length - 1
-    approve(active.id, { consecutive, date, code, signature, signerName: user.name, signerRole: currentStep(active)?.assignedToRole || 'Aprobador' }, comment)
+    await approve(active.id, { consecutive, date, code, signature, signerName: user.name, signerRole: currentStep(active)?.assignedToRole || 'Aprobador' }, comment)
     // Solo se notifica "aprobado" cuando se completa TODA la cadena, no en cada paso intermedio.
     if (isLastStep) onApproved?.(active)
     closeReview()
   }
 
-  const doReject = () => {
-    reject(active.id, comment)
+  const doReject = async () => {
+    await reject(active.id, comment)
+    onRejected?.(active, comment)
     closeReview()
   }
 
@@ -110,7 +111,7 @@ export default function ApprovalQueue({ domain, renderPreview, onApproved }) {
         footer={
           active?.status === 'pendiente' && activeMyTurn && (
             <>
-              <Button variant="danger" icon={XCircle} disabled={!canApproveDocs} onClick={() => setReAuthFor('reject')}>Rechazar</Button>
+              <Button variant="danger" icon={XCircle} disabled={!canApproveDocs} onClick={() => setReAuthFor('reject')}>{rejectLabel}</Button>
               <Button variant="primary" icon={CheckCircle2} disabled={!signature || !canApproveDocs} onClick={() => setReAuthFor('approve')} title={!canApproveDocs ? 'Sin permiso para aprobar' : undefined}>
                 Aprobar y firmar
               </Button>
@@ -187,11 +188,11 @@ export default function ApprovalQueue({ domain, renderPreview, onApproved }) {
       <ReAuthModal
         open={!!reAuthFor}
         onClose={() => setReAuthFor(null)}
-        actionLabel={reAuthFor === 'approve' ? 'Confirmar y firmar' : 'Confirmar rechazo'}
+        actionLabel={reAuthFor === 'approve' ? 'Confirmar y firmar' : `Confirmar: ${rejectLabel.toLowerCase()}`}
         message={
           reAuthFor === 'approve'
             ? '¿Seguro que quieres firmar este documento? Reingresa tu contraseña para estampar tu firma.'
-            : '¿Seguro que quieres rechazar este documento? Reingresa tu contraseña para confirmar.'
+            : (rejectConfirmMessage || '¿Seguro que quieres rechazar este documento? Reingresa tu contraseña para confirmar.')
         }
         onConfirm={() => (reAuthFor === 'approve' ? doApprove() : doReject())}
         preview={

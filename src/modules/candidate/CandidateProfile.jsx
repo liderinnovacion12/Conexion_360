@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Save, Briefcase } from 'lucide-react'
 import PageHeader from '../../components/common/PageHeader.jsx'
 import { Card } from '../../components/ui/Card.jsx'
@@ -9,26 +9,59 @@ import { Field, Input, Select } from '../../components/ui/Form.jsx'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { useCandidateGroups } from '../../hooks/useCandidateGroups.js'
 import { useTracks } from '../../hooks/useTracks.js'
-import { CANDIDATES } from '../../data/mockCandidates.js'
+import { useCandidates } from '../../hooks/useCandidates.js'
+
+const emptyForm = (user) => ({
+  name: user.name, docType: 'Cédula de ciudadanía', doc: '', birth: '',
+  gender: 'Masculino', address: '', city: '', dept: '',
+  phone: '', email: user.email, civil: 'Soltero(a)', education: 'Profesional',
+})
 
 export default function CandidateProfile() {
   const { user } = useAuth()
-  const candidate = CANDIDATES.find((c) => c.id === user.candidateId)
+  const { candidates, updateCandidate } = useCandidates()
+  const candidate = candidates.find((c) => c.id === user.candidateId)
   const { groupsForCandidate } = useCandidateGroups()
   const { trackLabel } = useTracks()
   const myGroups = candidate ? groupsForCandidate(candidate.id) : []
   const [saved, setSaved] = useState(false)
-  const [form, setForm] = useState({
-    name: user.name, docType: 'Cédula de ciudadanía', doc: '1.022.334.556', birth: '1996-04-12',
-    gender: 'Masculino', address: 'Calle 123 # 45-67', city: 'Bogotá', dept: 'Cundinamarca',
-    phone: '300 456 7890', email: user.email, civil: 'Soltero(a)', education: 'Profesional',
-  })
+  const [saving, setSaving] = useState(false)
+  const [form, setForm] = useState(emptyForm(user))
+
+  // Cuando llegan (o cambian) los datos reales del aspirante, precargamos
+  // el formulario con ellos en vez de dejar los valores vacíos por defecto.
+  useEffect(() => {
+    if (!candidate) return
+    setForm({
+      name: candidate.name || user.name,
+      docType: candidate.docType || 'Cédula de ciudadanía',
+      doc: candidate.doc || '',
+      birth: candidate.birth || '',
+      gender: candidate.gender || 'Masculino',
+      address: candidate.address || '',
+      city: candidate.city || '',
+      dept: candidate.dept || '',
+      phone: candidate.phone || '',
+      email: candidate.email || user.email,
+      civil: candidate.civil || 'Soltero(a)',
+      education: candidate.education || 'Profesional',
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [candidate?.id])
+
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value })
 
-  const save = (e) => {
+  const save = async (e) => {
     e.preventDefault()
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2500)
+    if (!candidate) return
+    setSaving(true)
+    try {
+      await updateCandidate(candidate.id, form)
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2500)
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -78,7 +111,9 @@ export default function CandidateProfile() {
             <Field label="Nivel de educación más alto"><Select value={form.education} onChange={set('education')} options={['Bachiller', 'Técnico', 'Tecnólogo', 'Profesional', 'Especialización', 'Maestría']} /></Field>
           </div>
           <div className="row" style={{ justifyContent: 'flex-end', marginTop: 18 }}>
-            <Button type="submit" variant="primary" icon={Save}>Guardar datos</Button>
+            <Button type="submit" variant="primary" icon={Save} disabled={!candidate || saving}>
+              {saving ? 'Guardando…' : 'Guardar datos'}
+            </Button>
           </div>
         </Card>
       </form>

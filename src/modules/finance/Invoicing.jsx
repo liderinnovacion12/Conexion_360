@@ -34,9 +34,9 @@ export default function Invoicing() {
   const addItem = () => setForm((f) => ({ ...f, items: [...f.items, emptyItem()] }))
   const removeItem = (idx) => setForm((f) => ({ ...f, items: f.items.filter((_, i) => i !== idx) }))
 
-  const save = () => {
+  const save = async () => {
     if (!form.clientId || form.items.some((i) => !i.description.trim())) return
-    addInvoice(form)
+    await addInvoice(form)
     setOpen(false)
   }
 

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, Navigate } from 'react-router-dom'
+import { useNavigate, Navigate, Link } from 'react-router-dom'
 import { LogIn, Mail, Lock, Eye, EyeOff, Sun, Moon } from 'lucide-react'
 import AnimatedLogo from '../assets/AnimatedLogo.jsx'
 import { LogoFull } from '../assets/Logo.jsx'
@@ -39,7 +39,7 @@ export default function Login() {
 
   const quickFill = (u) => {
     setEmail(u.email)
-    setPassword('demo')
+    setPassword('Conexion360')
     setError('')
   }
 
@@ -120,10 +120,14 @@ export default function Login() {
             <Button type="submit" variant="primary" icon={LogIn} disabled={loading} className="full">
               {loading ? 'Ingresando…' : 'Iniciar sesión'}
             </Button>
+
+            <p className="sub" style={{ textAlign: 'center', marginTop: 2 }}>
+              ¿Eres aspirante y quieres postularte? <Link to="/registro">Regístrate aquí</Link>
+            </p>
           </form>
 
           <details className="demo-accounts">
-            <summary>Cuentas de demostración (contraseña: <b>demo</b>)</summary>
+            <summary>Cuentas de demostración (contraseña: <b>Conexion360</b>)</summary>
             <div className="demo-grid">
               {users.map((u) => (
                 <button key={u.id} className="demo-chip" onClick={() => quickFill(u)} type="button">

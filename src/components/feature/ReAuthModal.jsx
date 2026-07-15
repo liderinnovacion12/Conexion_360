@@ -6,6 +6,8 @@ import { Field, Input } from '../ui/Form.jsx'
 import { AlertBanner } from '../ui/Feedback.jsx'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { findUserByCredentials } from '../../data/mockUsers.js'
+import { USE_SUPABASE } from '../../services/api.js'
+import { supabase } from '../../services/supabaseClient.js'
 
 // Exige reingresar usuario y clave ANTES de estampar una firma (la del
 // creador del documento o la de un aprobador en la ruta). Evita que una
@@ -34,7 +36,31 @@ export default function ReAuthModal({
     onClose?.()
   }
 
-  const confirm = () => {
+  const [checking, setChecking] = useState(false)
+
+  // Re-autenticación: vuelve a validar usuario y clave justo antes de
+  // estampar una firma, para evitar que quede registrada desde una sesión
+  // que no es la de su propio dueño. En modo Supabase se valida contra
+  // auth.users (signInWithPassword); en modo mock, contra la lista local.
+  const confirm = async () => {
+    setError('')
+    if (USE_SUPABASE) {
+      setChecking(true)
+      const { data, error: authErr } = await supabase.auth.signInWithPassword({ email, password })
+      setChecking(false)
+      if (authErr || !data?.user) {
+        setError('Usuario o contraseña incorrectos.')
+        return
+      }
+      if (data.user.id !== user?.id) {
+        setError('Debes confirmar con tu propia cuenta.')
+        return
+      }
+      setPassword('')
+      setShowForgot(false)
+      onConfirm?.()
+      return
+    }
     const found = findUserByCredentials(email, password)
     if (!found) {
       setError('Usuario o contraseña incorrectos.')
@@ -59,8 +85,8 @@ export default function ReAuthModal({
       footer={
         <>
           <Button variant="ghost" onClick={close}>Cancelar</Button>
-          <Button variant="violet" icon={ShieldCheck} disabled={!password} onClick={confirm}>
-            {actionLabel}
+          <Button variant="violet" icon={ShieldCheck} disabled={!password || checking} onClick={confirm}>
+            {checking ? 'Verificando…' : actionLabel}
           </Button>
         </>
       }

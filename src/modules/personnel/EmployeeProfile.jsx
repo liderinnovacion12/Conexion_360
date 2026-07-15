@@ -5,12 +5,14 @@ import { Field, Input } from '../../components/ui/Form.jsx'
 import Button from '../../components/ui/Button.jsx'
 import { Save } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext.jsx'
-import { PERSONNEL } from '../../data/mockPersonnel.js'
+import { usePersonnel } from '../../hooks/usePersonnel.js'
 import { formatCOP, formatDate } from '../../utils/format.js'
 
 export default function EmployeeProfile() {
   const { user } = useAuth()
-  const emp = PERSONNEL.find((p) => p.id === user.employeeId) || PERSONNEL[0]
+  const { personnel } = usePersonnel()
+  const emp = personnel.find((p) => p.id === user.employeeId) || personnel[0]
+  if (!emp) return null
 
   return (
     <div className="page">

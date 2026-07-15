@@ -4,14 +4,15 @@ import { Card, KpiCard } from '../../components/ui/Card.jsx'
 import { Select } from '../../components/ui/Form.jsx'
 import { BarChartCard, LineChartCard, DonutChart } from '../../components/charts/Charts.jsx'
 import { Wallet, Users, Percent } from 'lucide-react'
-import { PERSONNEL } from '../../data/mockPersonnel.js'
 import { PAYROLL_TREND } from '../../data/mockAnalytics.js'
 import { totalPayroll, groupSum, countBy } from './financeUtils.js'
 import { formatCOP } from '../../utils/format.js'
+import { usePersonnel } from '../../hooks/usePersonnel.js'
 
 export default function PayrollAnalytics() {
+  const { personnel: PERSONNEL } = usePersonnel()
   const [area, setArea] = useState('')
-  const areas = useMemo(() => [...new Set(PERSONNEL.map((p) => p.area))], [])
+  const areas = useMemo(() => [...new Set(PERSONNEL.map((p) => p.area))], [PERSONNEL])
   const rows = area ? PERSONNEL.filter((p) => p.area === area) : PERSONNEL
   const activos = rows.filter((p) => p.state === 'Activo')
 

@@ -3,6 +3,7 @@ import { ROLES } from '../utils/roles.js'
 import ProtectedRoute from './ProtectedRoute.jsx'
 import DashboardLayout from '../layouts/DashboardLayout.jsx'
 import Login from '../pages/Login.jsx'
+import Register from '../pages/Register.jsx'
 import { Forbidden, NotFound } from '../pages/ErrorPages.jsx'
 
 // Admin
@@ -16,6 +17,7 @@ import DocumentApprovals from '../modules/admin/DocumentApprovals.jsx'
 import Activities from '../modules/admin/Activities.jsx'
 import SystemActivities from '../modules/admin/SystemActivities.jsx'
 import ClientRequests from '../modules/admin/ClientRequests.jsx'
+import CandidateApprovals from '../modules/admin/CandidateApprovals.jsx'
 // Finance
 import FinanceDashboard from '../modules/finance/FinanceDashboard.jsx'
 import PersonnelRegistry from '../modules/finance/PersonnelRegistry.jsx'
@@ -67,12 +69,14 @@ export default function AppRoutes() {
     <Routes>
       <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/registro" element={<Register />} />
 
       {/* ---------- Administrador General ---------- */}
       <Route path="/admin" element={<Protected allow={[ROLES.ADMIN]} />}>
         <Route index element={<AdminDashboard />} />
         <Route path="usuarios" element={<UserManagement />} />
         <Route path="reclutamiento" element={<Pipeline />} />
+        <Route path="aprobaciones-aspirantes" element={<CandidateApprovals />} />
         <Route path="nomina" element={<PersonnelRegistry />} />
         <Route path="documentos" element={<DocumentReview />} />
         <Route path="editor-documentos" element={<DocumentEditor />} />

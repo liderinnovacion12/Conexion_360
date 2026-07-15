@@ -7,8 +7,8 @@ import Badge from '../../components/ui/Badge.jsx'
 import { ProgressBar } from '../../components/ui/Badge.jsx'
 import { AlertBanner } from '../../components/ui/Feedback.jsx'
 import { useAuth } from '../../context/AuthContext.jsx'
-import { DOCUMENTS } from '../../data/mockDocuments.js'
-import { CANDIDATES } from '../../data/mockCandidates.js'
+import { useCandidates } from '../../hooks/useCandidates.js'
+import { useDocuments } from '../../hooks/useDocuments.js'
 import { stageLabel, PIPELINE_STAGES } from '../../data/pipeline.js'
 import { docStatusVariant } from '../../utils/format.js'
 
@@ -16,8 +16,9 @@ export default function CandidateDashboard() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const cid = user.candidateId
-  const cand = CANDIDATES.find((c) => c.id === cid)
-  const docs = DOCUMENTS.filter((d) => d.candidateId === cid)
+  const { candidates } = useCandidates()
+  const { documents: docs } = useDocuments(cid)
+  const cand = candidates.find((c) => c.id === cid)
   const aprobados = docs.filter((d) => d.status === 'aprobado').length
   const pendientes = docs.filter((d) => d.status === 'pendiente').length
   const devueltos = docs.filter((d) => ['devuelto', 'rechazado'].includes(d.status))

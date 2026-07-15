@@ -105,10 +105,10 @@ export default function DocumentEditor() {
     }
   }
 
-  const sendToApproval = () => {
+  const sendToApproval = async () => {
     if (!signed || chain.length === 0) return
     const creatorSeal = { ...signed, signature, signerName, signerRole }
-    const doc = addDocument({
+    const doc = await addDocument({
       title,
       city,
       content,
@@ -120,7 +120,7 @@ export default function DocumentEditor() {
       verificationCode: signed.code,
       creatorSignature: signature,
     })
-    const approval = submitForApproval({
+    const approval = await submitForApproval({
       domain: 'document',
       refId: doc.id,
       title,

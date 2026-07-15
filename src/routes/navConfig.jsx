@@ -38,6 +38,7 @@ export const NAV_CONFIG = {
     ]},
     { section: 'Operación', items: [
       { to: '/admin/reclutamiento', label: 'Reclutamiento', icon: KanbanSquare },
+      { to: '/admin/aprobaciones-aspirantes', label: 'Aprobación final de aspirantes', icon: BadgeCheck },
       { to: '/admin/nomina', label: 'Nómina y personal', icon: Wallet },
       { to: '/admin/documentos', label: 'Documentos', icon: FolderOpen },
       { to: '/admin/editor-documentos', label: 'Editor de documentos', icon: FileSignature },

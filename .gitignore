@@ -34,3 +34,6 @@ pnpm-debug.log*
 
 # Vercel
 .vercel
+
+# Respaldos de base de datos (contienen datos reales, nunca al repo)
+/backups/

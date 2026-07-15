@@ -7,15 +7,16 @@ import Modal from '../../components/ui/Modal.jsx'
 import Button from '../../components/ui/Button.jsx'
 import Badge from '../../components/ui/Badge.jsx'
 import { Field, Input, Select } from '../../components/ui/Form.jsx'
-import { PERSONNEL, CONTRACT_TYPES, PAYROLL_STATES } from '../../data/mockPersonnel.js'
+import { CONTRACT_TYPES, PAYROLL_STATES } from '../../data/mockPersonnel.js'
 import { formatCOP, formatDate } from '../../utils/format.js'
 import { generateLaborCertificate, exportToCSV } from '../../utils/pdf.js'
+import { usePersonnel } from '../../hooks/usePersonnel.js'
 
 const emptyForm = { doc: '', name: '', position: '', contract: 'Indefinido', salary: '', state: 'Activo', start: '', end: '', area: '' }
 const stateVariant = { Activo: 'success', Inactivo: 'neutral', Suspendido: 'warning' }
 
 export default function PersonnelRegistry() {
-  const [rows, setRows] = useState(PERSONNEL)
+  const { personnel: rows, addPersonnel, updatePersonnel } = usePersonnel()
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState(emptyForm)
@@ -23,7 +24,7 @@ export default function PersonnelRegistry() {
   const [filterArea, setFilterArea] = useState('')
   const [filterContract, setFilterContract] = useState('')
 
-  const areas = useMemo(() => [...new Set(PERSONNEL.map((p) => p.area))], [])
+  const areas = useMemo(() => [...new Set(rows.map((p) => p.area))], [rows])
   const data = rows.filter(
     (p) => (!filterArea || p.area === filterArea) && (!filterContract || p.contract === filterContract)
   )
@@ -42,11 +43,11 @@ export default function PersonnelRegistry() {
     return Object.keys(e).length === 0
   }
 
-  const save = () => {
+  const save = async () => {
     if (!validate()) return
     const payload = { ...form, salary: Number(form.salary), end: form.end || null }
-    if (editing) setRows((rs) => rs.map((r) => (r.id === editing.id ? { ...r, ...payload } : r)))
-    else setRows((rs) => [{ ...payload, id: `p-${Date.now()}` }, ...rs])
+    if (editing) await updatePersonnel(editing.id, payload)
+    else await addPersonnel(payload)
     setOpen(false)
   }
 

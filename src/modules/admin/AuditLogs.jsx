@@ -2,11 +2,12 @@ import PageHeader from '../../components/common/PageHeader.jsx'
 import { Card } from '../../components/ui/Card.jsx'
 import DataTable from '../../components/ui/DataTable.jsx'
 import Badge from '../../components/ui/Badge.jsx'
-import { AUDIT_LOGS } from '../../data/mockAudit.js'
+import { useAuditLogs } from '../../hooks/useAuditLogs.js'
 import { formatDateTime } from '../../utils/format.js'
 import { exportToCSV } from '../../utils/pdf.js'
 
 export default function AuditLogs({ readOnly }) {
+  const { logs: AUDIT_LOGS } = useAuditLogs()
   const columns = [
     { key: 'actor', header: 'Usuario', strong: true },
     { key: 'role', header: 'Rol', render: (r) => <Badge variant="neutral">{r.role}</Badge> },

@@ -1,24 +1,35 @@
 import { useState, useRef, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Bell, Menu, Sun, Moon, KeyRound, LogOut } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { useTheme } from '../../context/ThemeContext.jsx'
 import { usePermissions } from '../../context/PermissionsContext.jsx'
+import { useNotifications } from '../../hooks/useNotifications.js'
 import { ROLE_META } from '../../utils/roles.js'
-import { NOTIFICATIONS } from '../../data/mockNotifications.js'
+import { formatDateTime } from '../../utils/format.js'
 import ChangePasswordModal from '../feature/ChangePasswordModal.jsx'
 
 export default function Topbar({ title, subtitle, onMenu }) {
   const { user, logout } = useAuth()
   const { theme, toggleTheme } = useTheme()
   const { hasCapability } = usePermissions()
+  const navigate = useNavigate()
   const meta = ROLE_META[user?.role]
   const [open, setOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [pwOpen, setPwOpen] = useState(false)
   const ref = useRef(null)
   const userRef = useRef(null)
-  const notifs = NOTIFICATIONS[user?.role] || NOTIFICATIONS.default
+  const { notifications: notifs, markRead } = useNotifications()
   const canChangePassword = hasCapability(user?.id, 'canChangePassword')
+
+  const openNotif = (n) => {
+    markRead(n.id)
+    if (n.link) {
+      navigate(n.link)
+      setOpen(false)
+    }
+  }
 
   useEffect(() => {
     const onClick = (e) => {
@@ -69,12 +80,21 @@ export default function Topbar({ title, subtitle, onMenu }) {
                 <b style={{ fontSize: '0.9rem' }}>Notificaciones</b>
                 <span className="badge badge--info">{unread} nuevas</span>
               </div>
+              {notifs.length === 0 && (
+                <div className="card-sub" style={{ padding: 16 }}>No tienes notificaciones.</div>
+              )}
               {notifs.map((n) => (
-                <div className="notif-item" key={n.id}>
+                <div
+                  className="notif-item"
+                  key={n.id}
+                  onClick={() => openNotif(n)}
+                  style={{ cursor: n.link ? 'pointer' : 'default' }}
+                >
                   <span className="notif-dot" style={{ background: n.color }} />
                   <div>
                     <div style={{ fontSize: '0.84rem', fontWeight: n.read ? 400 : 600 }}>{n.title}</div>
-                    <div className="card-sub">{n.time}</div>
+                    {n.body && <div className="card-sub">{n.body}</div>}
+                    <div className="card-sub">{n.time || (n.createdAt && formatDateTime(n.createdAt))}</div>
                   </div>
                 </div>
               ))}

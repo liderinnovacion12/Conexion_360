@@ -9,16 +9,17 @@ import { ProgressBar } from '../../components/ui/Badge.jsx'
 import { Tabs, AlertBanner } from '../../components/ui/Feedback.jsx'
 import { Field, Input, Select, Textarea } from '../../components/ui/Form.jsx'
 import { WEBCAM_EVIDENCE } from '../../data/mockCourses.js'
-import { CANDIDATES } from '../../data/mockCandidates.js'
 import { useCourses } from '../../hooks/useCourses.js'
+import { useCandidates } from '../../hooks/useCandidates.js'
 import { formatDateTime } from '../../utils/format.js'
 
-const candName = (id) => CANDIDATES.find((c) => c.id === id)?.name || id
 const emptyCourseForm = { title: '', type: 'video', duration: '20 min', description: '', passScore: 70 }
 const emptyQuestion = () => ({ id: `q-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, type: 'multiple', question: '', options: ['', ''], answer: null })
 
 export default function CourseAssignment() {
   const { courses, progress, getQuiz, saveQuiz, createCourse, assignToCandidates } = useCourses()
+  const { candidates: CANDIDATES } = useCandidates()
+  const candName = (id) => CANDIDATES.find((c) => c.id === id)?.name || id
   const [tab, setTab] = useState('cursos')
   const [assignFor, setAssignFor] = useState(null)
   const [assignChecked, setAssignChecked] = useState([])
@@ -34,25 +35,26 @@ export default function CourseAssignment() {
   const updateQuestion = (i, patch) => setQuestions((q) => q.map((it, idx) => (idx === i ? { ...it, ...patch } : it)))
 
   const openAssign = (c) => { setAssignFor(c); setAssignChecked(c.assigned || []) }
-  const saveAssign = () => { assignToCandidates(assignFor.id, assignChecked); setAssignFor(null) }
+  const saveAssign = async () => { await assignToCandidates(assignFor.id, assignChecked); setAssignFor(null) }
   const toggleAssign = (id) => setAssignChecked((list) => (list.includes(id) ? list.filter((x) => x !== id) : [...list, id]))
 
-  const saveCourse = () => {
+  const saveCourse = async () => {
     if (!courseForm.title.trim()) return
-    createCourse(courseForm)
+    await createCourse(courseForm)
     setCourseForm(emptyCourseForm)
     setCourseOpen(false)
   }
 
-  const openQuiz = (course) => {
+  const openQuiz = async (course) => {
     setQuizFor(course)
     setQuizTitle(`Evaluación · ${course.title}`)
     setQuizPass(course.passScore || 70)
-    setQuestions(getQuiz(course.id).map((q) => ({ ...q, id: q.id || emptyQuestion().id })))
+    const q = await getQuiz(course.id)
+    setQuestions(q.map((qq) => ({ ...qq, id: qq.id || emptyQuestion().id })))
   }
-  const persistQuiz = () => {
+  const persistQuiz = async () => {
     if (!quizFor) return
-    saveQuiz(quizFor.id, questions.map((q) => ({ ...q, question: q.question || q.text || '' })))
+    await saveQuiz(quizFor.id, questions.map((q) => ({ ...q, question: q.question || q.text || '' })))
     setQuizFor(null)
   }
 

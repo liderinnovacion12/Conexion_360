@@ -2,14 +2,15 @@ import { Wallet, Users, Briefcase, Building2, Receipt, Landmark, AlertTriangle, 
 import PageHeader from '../../components/common/PageHeader.jsx'
 import { Card, KpiCard } from '../../components/ui/Card.jsx'
 import { BarChartCard, LineChartCard, DonutChart } from '../../components/charts/Charts.jsx'
-import { PERSONNEL } from '../../data/mockPersonnel.js'
 import { PAYROLL_TREND } from '../../data/mockAnalytics.js'
 import { totalPayroll, groupSum, countBy } from './financeUtils.js'
 import { formatCOP } from '../../utils/format.js'
 import { useInvoices } from '../../hooks/useInvoices.js'
 import { useClients } from '../../hooks/useClients.js'
+import { usePersonnel } from '../../hooks/usePersonnel.js'
 
 export default function FinanceDashboard() {
+  const { personnel: PERSONNEL } = usePersonnel()
   const activos = PERSONNEL.filter((p) => p.state === 'Activo')
   const contratistas = PERSONNEL.filter((p) => p.contract === 'Prestación de servicios')
   const byPosition = groupSum(activos, 'position').sort((a, b) => b.value - a.value).slice(0, 6)
@@ -34,7 +35,7 @@ export default function FinanceDashboard() {
       <PageHeader title="Tablero financiero" subtitle="Control de nómina y costos de personal." />
 
       <div className="grid grid-kpi stagger" style={{ marginBottom: 18 }}>
-        <KpiCard label="Valor total de nómina" value={formatCOP(totalPayroll())} icon={Wallet} accent="success" trend={{ dir: 'up', text: '+3.0% mensual' }} />
+        <KpiCard label="Valor total de nómina" value={formatCOP(totalPayroll(PERSONNEL))} icon={Wallet} accent="success" trend={{ dir: 'up', text: '+3.0% mensual' }} />
         <KpiCard label="Personal activo" value={activos.length} icon={Users} accent="teal" trend={{ dir: 'up', text: `${PERSONNEL.length} registros` }} />
         <KpiCard label="Contratistas" value={contratistas.length} icon={Briefcase} accent="violet" trend={{ dir: 'flat', text: 'Prestación de servicios' }} />
         <KpiCard label="Áreas operativas" value={new Set(PERSONNEL.map((p) => p.area)).size} icon={Building2} accent="cyan" trend={{ dir: 'up', text: 'Distribución por área' }} />

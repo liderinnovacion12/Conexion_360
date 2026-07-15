@@ -9,8 +9,8 @@ import { useGeneratedDocuments } from '../../hooks/useGeneratedDocuments.js'
 export default function DocumentApprovals() {
   const { documents, updateDocumentStatus } = useGeneratedDocuments()
 
-  const handleApproved = (item) => {
-    updateDocumentStatus(item.refId, 'aprobado')
+  const handleApproved = async (item) => {
+    await updateDocumentStatus(item.refId, 'aprobado')
   }
 
   const renderPreview = (item) => {

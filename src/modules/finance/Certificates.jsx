@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { FileSignature, Download, Eye } from 'lucide-react'
 import PageHeader from '../../components/common/PageHeader.jsx'
 import { Card } from '../../components/ui/Card.jsx'
@@ -6,13 +6,20 @@ import Button from '../../components/ui/Button.jsx'
 import Badge from '../../components/ui/Badge.jsx'
 import { Field, Select } from '../../components/ui/Form.jsx'
 import { AlertBanner } from '../../components/ui/Feedback.jsx'
-import { PERSONNEL } from '../../data/mockPersonnel.js'
+import { usePersonnel } from '../../hooks/usePersonnel.js'
 import { formatCOP, formatDate } from '../../utils/format.js'
 import { generateLaborCertificate } from '../../utils/pdf.js'
 
 export default function Certificates() {
-  const [selected, setSelected] = useState(PERSONNEL[0].id)
+  const { personnel: PERSONNEL } = usePersonnel()
+  const [selected, setSelected] = useState(null)
+
+  useEffect(() => {
+    if (!selected && PERSONNEL.length) setSelected(PERSONNEL[0].id)
+  }, [PERSONNEL, selected])
+
   const emp = PERSONNEL.find((p) => p.id === selected)
+  if (!emp) return null
 
   return (
     <div className="page">

@@ -4,7 +4,7 @@ import { Card } from '../../components/ui/Card.jsx'
 import Button from '../../components/ui/Button.jsx'
 import Badge from '../../components/ui/Badge.jsx'
 import { useAuth } from '../../context/AuthContext.jsx'
-import { PERSONNEL } from '../../data/mockPersonnel.js'
+import { usePersonnel } from '../../hooks/usePersonnel.js'
 import { formatCOP, formatDate } from '../../utils/format.js'
 
 // Autoservicio de contrato para CUALQUIER tipo de vinculación (indefinido,
@@ -13,7 +13,9 @@ import { formatCOP, formatDate } from '../../utils/format.js'
 // Activo, ya que es el mismo tipo de información para cualquier persona.
 export default function MyContract() {
   const { user } = useAuth()
-  const c = PERSONNEL.find((p) => p.id === user.employeeId) || PERSONNEL[0]
+  const { personnel } = usePersonnel()
+  const c = personnel.find((p) => p.id === user.employeeId) || personnel[0]
+  if (!c) return null
 
   return (
     <div className="page">

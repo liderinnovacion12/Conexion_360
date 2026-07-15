@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CheckCircle2, XCircle, Undo2, FileText, History, Eye } from 'lucide-react'
+import { CheckCircle2, XCircle, Undo2, FileText, History, Eye, Download } from 'lucide-react'
 import PageHeader from '../../components/common/PageHeader.jsx'
 import { Card } from '../../components/ui/Card.jsx'
 import DataTable from '../../components/ui/DataTable.jsx'
@@ -7,26 +7,36 @@ import Modal from '../../components/ui/Modal.jsx'
 import Button from '../../components/ui/Button.jsx'
 import Badge from '../../components/ui/Badge.jsx'
 import { Field, Textarea } from '../../components/ui/Form.jsx'
-import { DOCUMENTS, DOCUMENT_VERSIONS, DOCUMENT_TYPES } from '../../data/mockDocuments.js'
-import { CANDIDATES } from '../../data/mockCandidates.js'
+import { AlertBanner } from '../../components/ui/Feedback.jsx'
+import { DOCUMENT_TYPES } from '../../data/mockDocuments.js'
 import { docStatusVariant, formatDateTime } from '../../utils/format.js'
 import { useFormTemplates } from '../../hooks/useFormTemplates.js'
 import { useCandidateGroups } from '../../hooks/useCandidateGroups.js'
+import { useCandidates } from '../../hooks/useCandidates.js'
+import { useDocuments } from '../../hooks/useDocuments.js'
+import { useAuth } from '../../context/AuthContext.jsx'
 import { resolveRequiredFields } from '../../utils/formTemplates.js'
-
-const candName = (id) => CANDIDATES.find((c) => c.id === id)?.name || id
+import { USE_SUPABASE } from '../../services/api.js'
+import { getSignedDocumentUrl } from '../../services/supabaseClient.js'
 
 export default function DocumentReview() {
-  const [docs, setDocs] = useState(DOCUMENTS)
+  const { user } = useAuth()
+  const { candidates } = useCandidates()
+  const { documents: docs, reviewDocument, getVersions } = useDocuments()
   const [active, setActive] = useState(null)
   const [comment, setComment] = useState('')
+  const [versions, setVersions] = useState(null)
+  const [fileUrl, setFileUrl] = useState(null)
+  const [fileError, setFileError] = useState(null)
   const { templates } = useFormTemplates()
   const { groupsForCandidate } = useCandidateGroups()
+
+  const candName = (id) => candidates.find((c) => c.id === id)?.name || id
 
   // Determina si un documento es obligatorio según la plantilla vigente para
   // la vía/grupo del aspirante (en vez del valor fijo guardado al cargarlo).
   const isRequiredNow = (doc) => {
-    const candidate = CANDIDATES.find((c) => c.id === doc.candidateId)
+    const candidate = candidates.find((c) => c.id === doc.candidateId)
     if (!candidate) return doc.required
     const groupIds = groupsForCandidate(candidate.id).map((g) => g.id)
     const fields = resolveRequiredFields(candidate.track, groupIds, templates, DOCUMENT_TYPES)
@@ -34,16 +44,26 @@ export default function DocumentReview() {
     return match ? match.required : doc.required
   }
 
-  const open = (d) => { setActive(d); setComment(d.comment || '') }
+  const open = (d) => {
+    setActive(d)
+    setComment(d.comment || '')
+    setVersions(null)
+    setFileUrl(null)
+    setFileError(null)
+    getVersions(d.id).then(setVersions)
 
-  const review = (status) => {
-    setDocs((ds) =>
-      ds.map((d) =>
-        d.id === active.id
-          ? { ...d, status, comment, reviewedBy: 'Daniela Ortiz', reviewedAt: new Date().toISOString() }
-          : d
-      )
-    )
+    // `d.file` guarda la ruta real en Storage en modo Supabase (bucket
+    // privado) — se genera una URL firmada temporal para poder ver o
+    // descargar el PDF/imagen que subió el aspirante.
+    if (USE_SUPABASE && d.file) {
+      getSignedDocumentUrl(d.file)
+        .then(setFileUrl)
+        .catch((err) => setFileError(err.message))
+    }
+  }
+
+  const review = async (status) => {
+    await reviewDocument(active.id, { status, comment, reviewedByName: user.name })
     setActive(null)
     setComment('')
   }
@@ -60,8 +80,6 @@ export default function DocumentReview() {
       <Button size="sm" variant="ghost" icon={Eye} onClick={() => open(d)}>Revisar</Button>
     )},
   ]
-
-  const versions = active ? DOCUMENT_VERSIONS[active.id] : null
 
   return (
     <div className="page">
@@ -94,13 +112,36 @@ export default function DocumentReview() {
               <div className="stat-row"><span className="muted">Estado actual</span><Badge variant={docStatusVariant[active.status]} dot>{active.status}</Badge></div>
             </div>
 
-            {/* Vista previa PDF (placeholder) */}
-            <div className="course-viewer" style={{ aspectRatio: '8.5/4' }}>
-              <div className="col center gap-2">
-                <FileText size={28} style={{ color: 'var(--teal)' }} />
-                <span className="card-sub">Vista previa del PDF · {active.file}</span>
+            {/* Archivo real subido por el aspirante (Storage, bucket privado) */}
+            {USE_SUPABASE ? (
+              fileError ? (
+                <AlertBanner variant="warning">No se pudo generar el enlace de descarga: {fileError}</AlertBanner>
+              ) : fileUrl ? (
+                <div className="glass-soft" style={{ padding: 14 }}>
+                  <div className="row between" style={{ alignItems: 'center' }}>
+                    <span className="row gap-2"><FileText size={18} style={{ color: 'var(--teal)' }} /> Archivo cargado</span>
+                    <a href={fileUrl} target="_blank" rel="noopener noreferrer">
+                      <Button size="sm" variant="primary" icon={Download}>Ver / descargar</Button>
+                    </a>
+                  </div>
+                  <p className="card-sub" style={{ marginTop: 8 }}>El enlace es temporal y privado (expira en unos minutos).</p>
+                </div>
+              ) : (
+                <div className="course-viewer" style={{ aspectRatio: '8.5/4' }}>
+                  <div className="col center gap-2">
+                    <FileText size={28} style={{ color: 'var(--teal)' }} />
+                    <span className="card-sub">Generando enlace de descarga…</span>
+                  </div>
+                </div>
+              )
+            ) : (
+              <div className="course-viewer" style={{ aspectRatio: '8.5/4' }}>
+                <div className="col center gap-2">
+                  <FileText size={28} style={{ color: 'var(--teal)' }} />
+                  <span className="card-sub">Vista previa del PDF · {active.file}</span>
+                </div>
               </div>
-            </div>
+            )}
 
             <Field label="Comentario para el aspirante" hint="Visible para el aspirante al devolver o rechazar.">
               <Textarea

@@ -6,14 +6,16 @@ import Button from '../../components/ui/Button.jsx'
 import Badge from '../../components/ui/Badge.jsx'
 import { AlertBanner } from '../../components/ui/Feedback.jsx'
 import { useAuth } from '../../context/AuthContext.jsx'
-import { PERSONNEL } from '../../data/mockPersonnel.js'
+import { usePersonnel } from '../../hooks/usePersonnel.js'
 import { formatCOP, formatDate, daysBetween } from '../../utils/format.js'
 import { generateLaborCertificate } from '../../utils/pdf.js'
 
 export default function EmployeeDashboard() {
   const { user } = useAuth()
   const navigate = useNavigate()
-  const emp = PERSONNEL.find((p) => p.id === user.employeeId) || PERSONNEL[0]
+  const { personnel } = usePersonnel()
+  const emp = personnel.find((p) => p.id === user.employeeId) || personnel[0]
+  if (!emp) return null
   const diasRestantes = emp.end ? daysBetween(new Date(), emp.end) : null
 
   return (

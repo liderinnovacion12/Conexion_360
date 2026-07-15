@@ -1,12 +1,31 @@
+import { useState, useEffect, useCallback } from 'react'
 import { useLocalStorage } from './useLocalStorage.js'
 import { APPROVALS } from '../data/mockApprovals.js'
+import {
+  USE_SUPABASE,
+  listApprovals,
+  submitForApproval as apiSubmitForApproval,
+  decideApprovalStep,
+} from '../services/api.js'
 
 // Cola de aprobación genérica compartida por todos los dominios (contratos,
 // documentos...). Cada solicitud puede enrutarse por una CADENA de personas
 // (una o varias, en orden) — "de área en área". Solo a quien le toca el paso
 // actual puede actuar; cada firma exige re-autenticación (ver ReAuthModal).
 export function useApprovals() {
-  const [approvals, setApprovals] = useLocalStorage('cx360.approvals', APPROVALS)
+  const [mockApprovals, setMockApprovals] = useLocalStorage('cx360.approvals', APPROVALS)
+  const [remoteApprovals, setRemoteApprovals] = useState([])
+  const [loading, setLoading] = useState(USE_SUPABASE)
+
+  const reload = useCallback(() => {
+    if (!USE_SUPABASE) return
+    setLoading(true)
+    listApprovals().then(setRemoteApprovals).finally(() => setLoading(false))
+  }, [])
+
+  useEffect(() => { reload() }, [reload])
+
+  const approvals = USE_SUPABASE ? remoteApprovals : mockApprovals
 
   // Índice del paso pendiente actual (el primero sin decidir). -1 si ya
   // se decidió todo (aprobado o rechazado en algún punto de la cadena).
@@ -21,7 +40,12 @@ export function useApprovals() {
   }
 
   // `chain`: arreglo ordenado de personas [{ id, name, role, area }, ...]
-  const submitForApproval = ({ domain, refId, title, area, requestedById, requestedBy, requestedByRole, creatorSeal, chain }) => {
+  const submitForApproval = async ({ domain, refId, title, area, requestedById, requestedBy, requestedByRole, creatorSeal, chain }) => {
+    if (USE_SUPABASE) {
+      const id = await apiSubmitForApproval({ domain, refId, title, area, requestedById, requestedBy, requestedByRole, creatorSeal, chain })
+      await reload()
+      return { id }
+    }
     const item = {
       id: `apr-${Date.now()}`,
       domain,
@@ -45,7 +69,7 @@ export function useApprovals() {
       })),
       status: 'pendiente',
     }
-    setApprovals((list) => [item, ...list])
+    setMockApprovals((list) => [item, ...list])
     return item
   }
 
@@ -58,8 +82,13 @@ export function useApprovals() {
 
   // Aprueba el paso ACTUAL de la cadena; si era el último, el documento
   // queda aprobado por completo. Si no, avanza al siguiente firmante.
-  const approve = (id, seal, comment = '') => {
-    setApprovals((list) =>
+  const approve = async (id, seal, comment = '') => {
+    if (USE_SUPABASE) {
+      await decideApprovalStep(id, { decision: 'aprobado', seal, comment })
+      await reload()
+      return
+    }
+    setMockApprovals((list) =>
       list.map((a) => {
         if (a.id !== id) return a
         const idx = currentStepIndex(a)
@@ -73,8 +102,13 @@ export function useApprovals() {
     )
   }
 
-  const reject = (id, comment = '') => {
-    setApprovals((list) =>
+  const reject = async (id, comment = '') => {
+    if (USE_SUPABASE) {
+      await decideApprovalStep(id, { decision: 'rechazado', comment })
+      await reload()
+      return
+    }
+    setMockApprovals((list) =>
       list.map((a) => {
         if (a.id !== id) return a
         const idx = currentStepIndex(a)
@@ -87,5 +121,5 @@ export function useApprovals() {
     )
   }
 
-  return { approvals, submitForApproval, listPendingForApprover, listByDomain, listMine, approve, reject, currentStep, currentStepIndex }
+  return { approvals, loading, submitForApproval, listPendingForApprover, listByDomain, listMine, approve, reject, currentStep, currentStepIndex }
 }

@@ -5,11 +5,13 @@ import Badge from '../../components/ui/Badge.jsx'
 import { ProgressBar } from '../../components/ui/Badge.jsx'
 import { DonutChart } from '../../components/charts/Charts.jsx'
 import FunnelChart from '../../components/charts/FunnelChart.jsx'
-import { CANDIDATES, STATUS_VARIANT } from '../../data/mockCandidates.js'
+import { STATUS_VARIANT } from '../../data/mockCandidates.js'
 import { COURSE_STATUS, RECRUITMENT_FUNNEL } from '../../data/mockAnalytics.js'
 import { stageLabel } from '../../data/pipeline.js'
+import { useCandidates } from '../../hooks/useCandidates.js'
 
 export default function RecruitmentDashboard() {
+  const { candidates: CANDIDATES } = useCandidates()
   const enProceso = CANDIDATES.filter((c) => !['contratado', 'rechazado'].includes(c.stage))
   const aprobados = CANDIDATES.filter((c) => c.status === 'aprobado').length
   const contratados = CANDIDATES.filter((c) => c.status === 'contratado').length

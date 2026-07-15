@@ -2,14 +2,16 @@ import PageHeader from '../../components/common/PageHeader.jsx'
 import { Card } from '../../components/ui/Card.jsx'
 import DataTable from '../../components/ui/DataTable.jsx'
 import Badge from '../../components/ui/Badge.jsx'
-import { DOCUMENTS } from '../../data/mockDocuments.js'
-import { CANDIDATES } from '../../data/mockCandidates.js'
+import { useDocuments } from '../../hooks/useDocuments.js'
+import { useCandidates } from '../../hooks/useCandidates.js'
 import { docStatusVariant, formatDate } from '../../utils/format.js'
 import { exportToCSV } from '../../utils/pdf.js'
 
-const candName = (id) => CANDIDATES.find((c) => c.id === id)?.name || id
-
 export default function Compliance() {
+  const { documents: DOCUMENTS } = useDocuments()
+  const { candidates: CANDIDATES } = useCandidates()
+  const candName = (id) => CANDIDATES.find((c) => c.id === id)?.name || id
+
   const columns = [
     { key: 'type', header: 'Documento', strong: true },
     { key: 'candidateId', header: 'Titular', render: (d) => candName(d.candidateId) },

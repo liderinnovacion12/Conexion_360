@@ -11,51 +11,102 @@ import { AlertBanner } from '../../components/ui/Feedback.jsx'
 import { useUsers } from '../../hooks/useUsers.js'
 import { ROLE_META, ROLES } from '../../utils/roles.js'
 import { exportToCSV } from '../../utils/pdf.js'
-import { setUserPassword } from '../../data/mockUsers.js'
+import { USE_SUPABASE } from '../../services/api.js'
 
 const emptyForm = { name: '', email: '', role: ROLES.EMPLOYEE, area: '' }
 
 export default function UserManagement() {
-  const { users, addUser, updateUser, removeUser } = useUsers()
+  const { users, addUser, updateUser, removeUser, adminUpdateCredentials } = useUsers()
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState(emptyForm)
   const [created, setCreated] = useState(null)
+  const [createError, setCreateError] = useState(null)
+  const [saveError, setSaveError] = useState(null)
+  const [saving, setSaving] = useState(false)
   const [resetting, setResetting] = useState(null) // usuario al que se le está restableciendo la clave
+  const [resetPassword, setResetPassword] = useState('')
+  const [resetError, setResetError] = useState(null)
+  const [resetting2, setResettingBusy] = useState(false)
   const [resetDone, setResetDone] = useState(null) // { email, password } ya restablecida
 
   const openCreate = () => {
     setEditing(null)
     setForm(emptyForm)
     setCreated(null)
+    setCreateError(null)
+    setSaveError(null)
     setOpen(true)
   }
   const openEdit = (u) => {
     setEditing(u)
     setForm({ name: u.name, email: u.email, role: u.role, area: u.area })
     setCreated(null)
+    setCreateError(null)
+    setSaveError(null)
     setOpen(true)
   }
-  const save = () => {
+  const save = async () => {
     if (!form.name || !form.email) return
     if (editing) {
-      updateUser(editing.id, form)
-      setOpen(false)
+      setSaving(true)
+      setSaveError(null)
+      try {
+        // El correo real de acceso vive en auth.users, no en profiles —
+        // si cambió, pasa por el endpoint seguro de Administrador.
+        if (USE_SUPABASE && form.email !== editing.email) {
+          await adminUpdateCredentials(editing.id, { email: form.email })
+        }
+        await updateUser(editing.id, form)
+        setOpen(false)
+      } catch (err) {
+        setSaveError(err.message)
+      } finally {
+        setSaving(false)
+      }
     } else {
-      const avatar = form.name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()
-      addUser({ ...form, avatar })
-      setCreated({ email: form.email, password: 'demo' })
+      try {
+        const avatar = form.name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()
+        await addUser({ ...form, avatar })
+        setCreated({ email: form.email, password: 'demo' })
+      } catch (err) {
+        setCreateError(err.message)
+      }
     }
   }
 
-  // Restablecer la contraseña de alguien que no la recuerda: el Admin genera
-  // una nueva clave temporal y se la comunica; la persona puede cambiarla
-  // luego desde su propio menú de usuario.
-  const askReset = (u) => setResetting(u)
-  const confirmReset = () => {
+  // Restablecer la contraseña de alguien que no la recuerda: el Admin
+  // define una nueva clave temporal y se la comunica; la persona puede
+  // cambiarla luego desde su propio menú de usuario. En modo Supabase
+  // pasa por el endpoint seguro de Administrador (nunca por el navegador
+  // directamente con la service role key).
+  const askReset = (u) => {
+    setResetting(u)
+    setResetPassword(Math.random().toString(36).slice(-10))
+    setResetError(null)
+  }
+  const confirmReset = async () => {
     if (!resetting) return
-    const temp = Math.random().toString(36).slice(-8)
-    setUserPassword(resetting.id, temp)
+    if (USE_SUPABASE) {
+      if (resetPassword.length < 8) {
+        setResetError('La contraseña debe tener al menos 8 caracteres.')
+        return
+      }
+      setResettingBusy(true)
+      setResetError(null)
+      try {
+        await adminUpdateCredentials(resetting.id, { password: resetPassword })
+        setResetDone({ email: resetting.email, password: resetPassword })
+        setResetting(null)
+      } catch (err) {
+        setResetError(err.message)
+      } finally {
+        setResettingBusy(false)
+      }
+      return
+    }
+    const temp = resetPassword || Math.random().toString(36).slice(-8)
+    await adminUpdateCredentials(resetting.id, { password: temp })
     setResetDone({ email: resetting.email, password: temp })
     setResetting(null)
   }
@@ -129,7 +180,9 @@ export default function UserManagement() {
           ) : (
             <>
               <Button variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
-              <Button variant="primary" icon={Shield} onClick={save}>{editing ? 'Guardar cambios' : 'Crear usuario'}</Button>
+              <Button variant="primary" icon={Shield} onClick={save} disabled={saving}>
+                {saving ? 'Guardando…' : editing ? 'Guardar cambios' : 'Crear usuario'}
+              </Button>
             </>
           )
         }
@@ -146,6 +199,8 @@ export default function UserManagement() {
           </div>
         ) : (
           <div className="col gap-3">
+            {createError && <AlertBanner variant="danger" title="No se pudo crear">{createError}</AlertBanner>}
+            {saveError && <AlertBanner variant="danger" title="No se pudo guardar">{saveError}</AlertBanner>}
             <Field label="Nombre completo" required>
               <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Nombre y apellidos" />
             </Field>
@@ -173,15 +228,23 @@ export default function UserManagement() {
         footer={
           <>
             <Button variant="ghost" onClick={() => setResetting(null)}>Cancelar</Button>
-            <Button variant="primary" icon={KeyRound} onClick={confirmReset}>Restablecer</Button>
+            <Button variant="primary" icon={KeyRound} onClick={confirmReset} disabled={resetting2}>
+              {resetting2 ? 'Restableciendo…' : 'Restablecer'}
+            </Button>
           </>
         }
       >
         {resetting && (
-          <AlertBanner variant="warning">
-            Vas a generar una <b>nueva contraseña temporal</b> para <b>{resetting.name}</b> ({resetting.email}).
-            Su contraseña actual dejará de funcionar de inmediato.
-          </AlertBanner>
+          <div className="col gap-3">
+            <AlertBanner variant="warning">
+              Vas a generar una <b>nueva contraseña</b> para <b>{resetting.name}</b> ({resetting.email}).
+              Su contraseña actual dejará de funcionar de inmediato.
+            </AlertBanner>
+            {resetError && <AlertBanner variant="danger">{resetError}</AlertBanner>}
+            <Field label="Nueva contraseña" required hint="Mínimo 8 caracteres. Se sugiere una aleatoria, pero puedes escribir otra.">
+              <Input value={resetPassword} onChange={(e) => setResetPassword(e.target.value)} />
+            </Field>
+          </div>
         )}
       </Modal>
 

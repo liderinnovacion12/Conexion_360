@@ -43,9 +43,9 @@ export default function FormBuilder() {
     if (created) setForm((f) => ({ ...f, track: created.id }))
     setNewTrackName('')
   }
-  const confirmNewGroup = () => {
+  const confirmNewGroup = async () => {
     if (!newGroupName.trim()) return
-    const created = addGroup(newGroupName.trim())
+    const created = await addGroup(newGroupName.trim())
     setForm((f) => ({ ...f, groupId: created.id }))
     setNewGroupName('')
   }
@@ -56,13 +56,13 @@ export default function FormBuilder() {
   const addField = () => setForm((f) => ({ ...f, fields: [...f.fields, { key: '', label: '', type: 'document', required: false }] }))
   const removeField = (idx) => setForm((f) => ({ ...f, fields: f.fields.filter((_, i) => i !== idx) }))
 
-  const save = () => {
+  const save = async () => {
     if (!form.name.trim() || form.fields.some((f) => !f.label.trim())) return
     if (form.track === NEW_TRACK_VALUE || form.groupId === NEW_GROUP_VALUE) return
     const fields = form.fields.map((f) => ({ ...f, key: f.key || f.label.toLowerCase().replace(/\s+/g, '_') }))
     const payload = { name: form.name, track: form.track || null, groupId: form.groupId || null, fields }
-    if (editing) updateTemplate(editing.id, payload)
-    else addTemplate(payload)
+    if (editing) await updateTemplate(editing.id, payload)
+    else await addTemplate(payload)
     setOpen(false)
   }
 

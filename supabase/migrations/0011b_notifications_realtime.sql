@@ -1,0 +1,12 @@
+-- ============================================================
+-- Solo necesario al restaurar/clonar el proyecto en un nuevo Supabase:
+-- la publicación `supabase_realtime` (a diferencia del esquema y los
+-- datos) NO se copia al clonar un proyecto, así que hay que volver a
+-- agregar la tabla `notifications` para que el flotante en vivo
+-- (useNotifications.js) siga funcionando. Ya está incluido dentro de
+-- 0011_notifications_events.sql para instalaciones nuevas desde cero;
+-- este archivo documenta el paso que hubo que repetir manualmente tras
+-- migrar de proyecto Supabase (ver 0014 para el resto de lo que el
+-- clonado no preserva: Storage, GRANT/REVOKE, security_invoker).
+-- ============================================================
+alter publication supabase_realtime add table notifications;

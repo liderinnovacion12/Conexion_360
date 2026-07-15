@@ -5,16 +5,17 @@ import Badge from '../../components/ui/Badge.jsx'
 import { Tabs } from '../../components/ui/Feedback.jsx'
 import KanbanBoard from '../../components/feature/KanbanBoard.jsx'
 import FunnelChart from '../../components/charts/FunnelChart.jsx'
-import { CANDIDATES, STATUS_VARIANT } from '../../data/mockCandidates.js'
+import { STATUS_VARIANT } from '../../data/mockCandidates.js'
 import { PIPELINE_STAGES } from '../../data/pipeline.js'
 import { RECRUITMENT_FUNNEL } from '../../data/mockAnalytics.js'
+import { useCandidates } from '../../hooks/useCandidates.js'
 
 export default function Pipeline() {
-  const [items, setItems] = useState(CANDIDATES)
+  const { candidates: items, moveStage } = useCandidates()
   const [view, setView] = useState('kanban')
 
   const move = (id, stage) => {
-    setItems((its) => its.map((it) => (it.id === id ? { ...it, stage } : it)))
+    moveStage(id, stage)
   }
 
   return (

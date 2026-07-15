@@ -7,7 +7,7 @@ import { Field, Textarea } from '../../components/ui/Form.jsx'
 import { AlertBanner } from '../../components/ui/Feedback.jsx'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { useServiceRequests } from '../../hooks/useServiceRequests.js'
-import { SERVICES } from '../../data/mockServices.js'
+import { useServices } from '../../hooks/useServices.js'
 
 const ICONS = { UserPlus, Briefcase, Wallet, Receipt, Scale, ShieldCheck }
 
@@ -17,6 +17,7 @@ const ICONS = { UserPlus, Briefcase, Wallet, Receipt, Scale, ShieldCheck }
 export default function ServicesShowcase() {
   const { user } = useAuth()
   const { addRequest } = useServiceRequests()
+  const { services: SERVICES } = useServices()
   const [active, setActive] = useState(null)
   const [message, setMessage] = useState('')
   const [sent, setSent] = useState(null)
@@ -27,9 +28,9 @@ export default function ServicesShowcase() {
     setSent(null)
   }
 
-  const submit = () => {
+  const submit = async () => {
     if (!active) return
-    addRequest({
+    await addRequest({
       serviceId: active.id,
       serviceName: active.name,
       requestedById: user.id,
