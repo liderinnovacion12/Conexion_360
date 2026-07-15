@@ -16,6 +16,13 @@ import { useCandidateGroups } from '../../hooks/useCandidateGroups.js'
 import { resolveRequiredFields } from '../../utils/formTemplates.js'
 import { docStatusVariant, formatDateTime } from '../../utils/format.js'
 
+const REQUIRED_PROFILE_FIELDS = ['name', 'doc', 'birth', 'address', 'city', 'dept', 'phone', 'email']
+
+function profileComplete(candidate) {
+  if (!candidate) return false
+  return REQUIRED_PROFILE_FIELDS.every((f) => candidate[f] && String(candidate[f]).trim() !== '')
+}
+
 export default function CandidateDocuments() {
   const { user } = useAuth()
   const cid = user.candidateId
@@ -64,14 +71,28 @@ export default function CandidateDocuments() {
     }
   }
 
+  const canUpload = profileComplete(candidate)
+
   return (
     <div className="page">
       <PageHeader title="Mis documentos" subtitle="Carga tus documentos en PDF. Solo se aceptan archivos PDF." />
 
-      <AlertBanner variant="info" title="Importante">
-        Los documentos marcados como <b>requeridos</b> son obligatorios para avanzar en el proceso. Si un documento es
-        devuelto, revisa el comentario y vuelve a cargarlo.
-      </AlertBanner>
+      {!canUpload && (
+        <AlertBanner variant="warning" title="Completa tus datos personales primero">
+          Debes llenar todos los campos obligatorios en{' '}
+          <a href="/aspirante/perfil" style={{ color: 'inherit', fontWeight: 600, textDecoration: 'underline' }}>
+            Mis datos personales
+          </a>{' '}
+          antes de poder cargar documentos.
+        </AlertBanner>
+      )}
+
+      {canUpload && (
+        <AlertBanner variant="info" title="Importante">
+          Los documentos marcados como <b>requeridos</b> son obligatorios para avanzar en el proceso. Si un documento es
+          devuelto, revisa el comentario y vuelve a cargarlo.
+        </AlertBanner>
+      )}
 
       <div className="grid grid-2 stagger" style={{ marginTop: 18 }}>
         {rows.map((r) => (
@@ -107,8 +128,9 @@ export default function CandidateDocuments() {
                 size="sm"
                 variant={r.doc && r.doc.status === 'aprobado' ? 'ghost' : 'primary'}
                 icon={r.doc && r.doc.status === 'aprobado' ? CheckCircle2 : Upload}
-                disabled={r.doc?.status === 'aprobado'}
-                onClick={() => { setUpFor(r); setFile(null) }}
+                disabled={!canUpload || r.doc?.status === 'aprobado'}
+                onClick={() => { if (canUpload) { setUpFor(r); setFile(null) } }}
+                title={!canUpload ? 'Completa tus datos personales primero' : undefined}
               >
                 {r.doc?.status === 'aprobado' ? 'Aprobado' : r.doc ? 'Volver a cargar' : 'Cargar PDF'}
               </Button>
