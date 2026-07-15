@@ -831,6 +831,14 @@ export async function notifyRole(targetRole, { title, body, link, color = '#FF8F
   check(error)
 }
 
+export async function notifyUser(profileId, { title, body, link, color = '#19C7A0' }) {
+  must()
+  const { error } = await supabase
+    .from('notifications')
+    .insert({ profile_id: profileId, title, body, link, color })
+  check(error)
+}
+
 // Cambiar el correo o la contraseña de OTRA cuenta requiere la API de
 // administración de Supabase Auth (service role key), que nunca debe
 // vivir en el navegador. Por eso esto llama a un endpoint propio

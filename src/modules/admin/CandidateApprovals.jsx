@@ -11,7 +11,7 @@ import { useDocuments } from '../../hooks/useDocuments.js'
 import { stageLabel } from '../../data/pipeline.js'
 import { STATUS_VARIANT } from '../../data/mockCandidates.js'
 import { docStatusVariant } from '../../utils/format.js'
-import { USE_SUPABASE, sendApprovalEmail, notifyRole } from '../../services/api.js'
+import { USE_SUPABASE, notifyUser, notifyRole } from '../../services/api.js'
 import { getSignedDocumentUrl } from '../../services/supabaseClient.js'
 
 // Aprobación FINAL del aspirante (no de un documento suyo). Reclutamiento
@@ -22,18 +22,20 @@ import { getSignedDocumentUrl } from '../../services/supabaseClient.js'
 export default function CandidateApprovals() {
   const { candidates, updateCandidate } = useCandidates()
   const { documents } = useDocuments()
-  const [emailError, setEmailError] = useState(null)
-
   const handleApproved = async (item) => {
-    setEmailError(null)
     const candidate = candidates.find((c) => c.id === item.refId)
     if (candidate) {
       await updateCandidate(candidate.id, { status: 'aprobado' })
-      if (USE_SUPABASE && candidate.email) {
+      if (USE_SUPABASE && candidate.id) {
         try {
-          await sendApprovalEmail({ email: candidate.email, name: candidate.name })
-        } catch (err) {
-          setEmailError(err?.message || 'No se pudo enviar el correo de notificación al aspirante.')
+          await notifyUser(candidate.id, {
+            title: '¡Tu proceso fue aprobado!',
+            body: 'El Administrador aprobó tu proceso en Conexión 360. Ingresa a tu perfil para ver los próximos pasos.',
+            link: '/aspirante',
+            color: '#19C7A0',
+          })
+        } catch {
+          // No es crítico si falla la notificación
         }
       }
     }
@@ -89,13 +91,8 @@ export default function CandidateApprovals() {
     <div className="page">
       <PageHeader
         title="Aprobación final de aspirantes"
-        subtitle="Aspirantes preaprobados por Reclutamiento, pendientes de tu firma final. Al aprobar, el aspirante recibe un correo confirmando su proceso."
+        subtitle="Aspirantes preaprobados por Reclutamiento, pendientes de tu firma final. Al aprobar, el aspirante recibe una notificación en su perfil."
       />
-      {emailError && (
-        <AlertBanner variant="warning" title="El aspirante quedó aprobado, pero el correo falló">
-          {emailError} Puedes verificar la configuración de Resend (RESEND_API_KEY en Vercel) e intentar reenviarlo manualmente si es necesario.
-        </AlertBanner>
-      )}
       <Card className="anim-up">
         <ApprovalQueue
           domain="candidate"
