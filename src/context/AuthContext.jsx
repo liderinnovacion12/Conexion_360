@@ -184,12 +184,26 @@ export function AuthProvider({ children }) {
       password,
       options: { data: { name, role: 'candidate', area: 'Proceso de selección', doc } },
     })
-    if (error) throw error
+
+    // Supabase devuelve un usuario "fantasma" (identities vacío) cuando el
+    // correo ya existe en auth.users. En ese caso reenviamos el correo de
+    // confirmación para que la persona pueda activar su cuenta de nuevo.
+    if (!error && data.user && data.user.identities && data.user.identities.length === 0) {
+      await supabase.auth.resend({ type: 'signup', email })
+      return { needsEmailConfirmation: true }
+    }
+
+    if (error) {
+      // Si el mensaje indica que el usuario ya existe con cuenta activa,
+      // lo comunicamos claramente en lugar del mensaje técnico de Supabase.
+      const msg = error.message?.toLowerCase() || ''
+      if (msg.includes('already registered') || msg.includes('already been registered')) {
+        throw new Error('Ya existe una cuenta activa con ese correo. Intenta iniciar sesión o usa otro correo.')
+      }
+      throw error
+    }
 
     if (data.session && data.user) {
-      // Confirmación de correo desactivada en el proyecto: ya hay sesión
-      // activa. onAuthStateChange (arriba) también la recogerá, pero la
-      // resolvemos aquí de una vez para no depender del timing del evento.
       const profileUser = await fetchProfile(data.user.id)
       setUser(profileUser)
       return { needsEmailConfirmation: false }
