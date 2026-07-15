@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Upload, FileText, MessageSquare, CheckCircle2 } from 'lucide-react'
 import PageHeader from '../../components/common/PageHeader.jsx'
 import { Card } from '../../components/ui/Card.jsx'
@@ -93,9 +94,9 @@ export default function CandidateDocuments() {
       {!hasProfile && (
         <AlertBanner variant="warning" title="Completa tus datos personales primero">
           Debes llenar todos los campos obligatorios en{' '}
-          <a href="/aspirante/perfil" style={{ color: 'inherit', fontWeight: 600, textDecoration: 'underline' }}>
+          <Link to="/aspirante/perfil" style={{ color: 'inherit', fontWeight: 600, textDecoration: 'underline' }}>
             Mis datos personales
-          </a>{' '}
+          </Link>{' '}
           antes de poder cargar documentos.
         </AlertBanner>
       )}
@@ -103,9 +104,9 @@ export default function CandidateDocuments() {
       {hasProfile && !hasAuth && (
         <AlertBanner variant="warning" title="Firma la autorización de datos primero">
           Debes aceptar y firmar la{' '}
-          <a href="/aspirante/autorizacion" style={{ color: 'inherit', fontWeight: 600, textDecoration: 'underline' }}>
+          <Link to="/aspirante/autorizacion" style={{ color: 'inherit', fontWeight: 600, textDecoration: 'underline' }}>
             Autorización de tratamiento de datos
-          </a>{' '}
+          </Link>{' '}
           antes de poder cargar documentos.
         </AlertBanner>
       )}
