@@ -35,11 +35,17 @@ export default function ApprovalQueue({ domain, renderPreview, onApproved, onRej
   const [reAuthFor, setReAuthFor] = useState(null) // 'approve' | 'reject' | null
 
   const isAdmin = user?.role === ROLES.ADMIN
+  // Muestra la aprobación si: es admin, o el usuario tiene algún paso pendiente en la cadena
   const items = approvals.filter(
-    (a) => a.domain === domain && (isAdmin || currentStep(a)?.assignedToId === user?.id)
+    (a) => a.domain === domain && (
+      isAdmin ||
+      a.chain.some((s) => s.assignedToId === user?.id && s.status === 'pendiente') ||
+      a.chain.some((s) => s.assignedToId === user?.id)  // también ver las ya decididas
+    )
   )
 
-  const myTurn = (item) => currentStep(item)?.assignedToId === user?.id
+  // Es "su turno" si tiene algún paso PENDIENTE en la cadena (soporta paralelos)
+  const myTurn = (item) => item.chain.some((s) => s.assignedToId === user?.id && s.status === 'pendiente')
 
   const open = (item) => {
     setActive(item)
@@ -55,10 +61,15 @@ export default function ApprovalQueue({ domain, renderPreview, onApproved, onRej
     const consecutive = nextConsecutive()
     const date = new Date().toISOString()
     const code = verificationCode({ approvalId: active.id, signerName: user.name, consecutive, date })
-    const isLastStep = currentStepIndex(active) === active.chain.length - 1
-    await approve(active.id, { consecutive, date, code, signature, signerName: user.name, signerRole: currentStep(active)?.assignedToRole || 'Aprobador' }, comment)
-    // Solo se notifica "aprobado" cuando se completa TODA la cadena, no en cada paso intermedio.
-    if (isLastStep) onApproved?.(active)
+    // Pasar userId para que el hook encuentre el paso correcto en cadenas paralelas
+    const myStep = active.chain.find((s) => s.assignedToId === user?.id && s.status === 'pendiente') || currentStep(active)
+    const isFullyApproved = await approve(
+      active.id,
+      { consecutive, date, code, signature, signerName: user.name, signerRole: myStep?.assignedToRole || 'Aprobador' },
+      comment,
+      user?.id,
+    )
+    if (isFullyApproved) onApproved?.(active)
     closeReview()
   }
 

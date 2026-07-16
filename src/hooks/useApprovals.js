@@ -80,26 +80,34 @@ export function useApprovals() {
 
   const listMine = (userId) => approvals.filter((a) => a.requestedById === userId)
 
-  // Aprueba el paso ACTUAL de la cadena; si era el último, el documento
-  // queda aprobado por completo. Si no, avanza al siguiente firmante.
-  const approve = async (id, seal, comment = '') => {
+  // Aprueba el paso del usuario en la cadena. Retorna true si la aprobación
+  // quedó completamente aprobada (útil para disparar onApproved en el cliente).
+  const approve = async (id, seal, comment = '', userId) => {
     if (USE_SUPABASE) {
-      await decideApprovalStep(id, { decision: 'aprobado', seal, comment })
+      const isFullyApproved = await decideApprovalStep(id, { decision: 'aprobado', seal, comment, assignedToId: userId })
       await reload()
-      return
+      return isFullyApproved
     }
+    let isFullyApproved = false
     setMockApprovals((list) =>
       list.map((a) => {
         if (a.id !== id) return a
-        const idx = currentStepIndex(a)
+        // En mock: buscar el paso del usuario o el primero pendiente
+        const idx = userId
+          ? a.chain.findIndex((s) => s.assignedToId === userId && s.status === 'pendiente')
+          : currentStepIndex(a)
         if (idx === -1) return a
+        const minOrder = idx  // en mock step_order = posición en array
+        // Auto-aprobar hermanos al mismo nivel (misma posición, mock simplificado)
         const chain = a.chain.map((s, i) =>
           i === idx ? { ...s, status: 'aprobado', seal, decidedAt: new Date().toISOString(), comment } : s
         )
-        const isLast = idx === chain.length - 1
-        return { ...a, chain, status: isLast ? 'aprobado' : 'pendiente' }
+        const hasNextLevel = chain.some((s, i) => i > idx && s.status === 'pendiente')
+        isFullyApproved = !hasNextLevel
+        return { ...a, chain, status: isFullyApproved ? 'aprobado' : 'pendiente' }
       })
     )
+    return isFullyApproved
   }
 
   const reject = async (id, comment = '') => {

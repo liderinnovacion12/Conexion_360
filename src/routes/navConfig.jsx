@@ -94,6 +94,7 @@ export const NAV_CONFIG = {
       { to: '/juridica/contratos', label: 'Emitir contratos', icon: Gavel },
       { to: '/juridica/editor-documentos', label: 'Editor de documentos', icon: FileSignature },
       { to: '/juridica/aprobaciones', label: 'Aprobaciones de contratos', icon: CheckSquare },
+      { to: '/juridica/aprobaciones-aspirantes', label: 'Aprobación de aspirantes', icon: BadgeCheck },
       { to: '/juridica/documentos-por-firmar', label: 'Documentos por firmar', icon: CheckSquare },
       { to: '/juridica/actividades', label: 'Actividades', icon: Activity },
       { to: '/juridica/aspirantes', label: 'Datos de aspirantes', icon: UserPlus },

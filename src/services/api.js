@@ -146,11 +146,13 @@ export async function listPersonnel() {
   return data.map(personnelFromRow)
 }
 
-export async function createPersonnel({ doc, name, position, contract, salary, state = 'Activo', start, end, area }) {
+export async function createPersonnel({ id, doc, name, position, contract, salary, state = 'Activo', start, end, area }) {
   must()
+  const row = { doc, name, position, contract, salary, state, start_date: start || null, end_date: end || null, area }
+  if (id) row.id = id
   const { data, error } = await supabase
     .from('personnel')
-    .insert({ doc, name, position, contract, salary, state, start_date: start || null, end_date: end || null, area })
+    .insert(row)
     .select()
     .single()
   check(error)
@@ -556,16 +558,18 @@ export async function submitForApproval({ domain, refId, title, area, requestedB
     .select()
     .single()
   check(error)
+  // stepOrder permite pasos paralelos (varios con el mismo valor = cualquiera puede aprobar)
   const steps = chain.map((p, i) => ({
-    approval_id: approval.id, step_order: i, assigned_to: p.id, assigned_to_name: p.name,
-    assigned_to_role: p.role, area: p.area, status: 'pendiente',
+    approval_id: approval.id, step_order: p.stepOrder !== undefined ? p.stepOrder : i,
+    assigned_to: p.id, assigned_to_name: p.name, assigned_to_role: p.role, area: p.area, status: 'pendiente',
   }))
   const { error: sErr } = await supabase.from('approval_chain_steps').insert(steps)
   check(sErr)
   return approval.id
 }
 
-export async function decideApprovalStep(approvalId, { decision, seal, comment = '' }) {
+// Retorna true si la aprobación quedó completamente aprobada tras esta decisión.
+export async function decideApprovalStep(approvalId, { decision, seal, comment = '', assignedToId }) {
   must()
   const { data: steps, error } = await supabase
     .from('approval_chain_steps')
@@ -573,9 +577,21 @@ export async function decideApprovalStep(approvalId, { decision, seal, comment =
     .eq('approval_id', approvalId)
     .order('step_order')
   check(error)
-  const idx = steps.findIndex((s) => s.status === 'pendiente')
-  if (idx === -1) return
-  const step = steps[idx]
+
+  const pending = steps.filter((s) => s.status === 'pendiente')
+  if (pending.length === 0) return false
+
+  // Nivel actual: el step_order más bajo con pasos aún pendientes
+  const minOrder = Math.min(...pending.map((s) => s.step_order))
+  const currentLevel = pending.filter((s) => s.step_order === minOrder)
+
+  // Si hay varios en el mismo nivel (paralelos), tomar el del usuario que decide
+  const step = assignedToId
+    ? (currentLevel.find((s) => s.assigned_to === assignedToId) || currentLevel[0])
+    : currentLevel[0]
+
+  if (!step) return false
+
   await supabase
     .from('approval_chain_steps')
     .update({ status: decision, seal: seal || null, decided_at: new Date().toISOString(), comment })
@@ -583,9 +599,25 @@ export async function decideApprovalStep(approvalId, { decision, seal, comment =
 
   if (decision === 'rechazado') {
     await supabase.from('approvals').update({ status: 'rechazado' }).eq('id', approvalId)
-  } else if (idx === steps.length - 1) {
-    await supabase.from('approvals').update({ status: 'aprobado' }).eq('id', approvalId)
+    return false
   }
+
+  // Aprobado: auto-aprobar hermanos paralelos en el mismo nivel
+  const siblings = currentLevel.filter((s) => s.id !== step.id)
+  if (siblings.length > 0) {
+    await supabase
+      .from('approval_chain_steps')
+      .update({ status: 'aprobado', decided_at: new Date().toISOString(), comment: 'Aprobado en paralelo' })
+      .in('id', siblings.map((s) => s.id))
+  }
+
+  // ¿Quedan niveles superiores?
+  const hasNextLevel = steps.some((s) => s.step_order > minOrder)
+  if (!hasNextLevel) {
+    await supabase.from('approvals').update({ status: 'aprobado' }).eq('id', approvalId)
+    return true
+  }
+  return false
 }
 
 // ============================================================

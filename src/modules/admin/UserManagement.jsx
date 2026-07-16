@@ -60,6 +60,7 @@ export default function UserManagement() {
       const candidate = candidates.find((c) => c.id === promoting.candidateId)
       // 1. Crear registro de personal con los datos del aspirante
       const personnel = await addPersonnel({
+        id: promoting.candidateId || undefined,  // mantiene el ID PRIMERNOMBRE-CEDULA en la tabla de personal
         doc: candidate?.doc || promoting.doc || '',
         name: promoting.name,
         position: promoForm.position,

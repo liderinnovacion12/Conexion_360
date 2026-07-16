@@ -26,6 +26,7 @@ import { useMySignatures } from '../../hooks/useMySignatures.js'
 import { useApprovals } from '../../hooks/useApprovals.js'
 import { useUsers } from '../../hooks/useUsers.js'
 import { useAreaApprovers } from '../../hooks/useAreaApprovers.js'
+import { ROLES } from '../../utils/roles.js'
 
 const NEW_TRACK_VALUE = '__new_track__'
 
@@ -93,7 +94,14 @@ export default function CandidatesAdmin() {
       const creatorSeal = { consecutive, date, code, signature, signerName: user.name, signerRole: 'Reclutamiento' }
 
       const approverId = AREA_APPROVERS['Dirección General']
-      const approver = users.find((u) => u.id === approverId)
+      const adminUser = users.find((u) => u.id === approverId) || users.find((u) => u.role === ROLES.ADMIN)
+      const legalUser = users.find((u) => u.role === ROLES.LEGAL)
+
+      // Cadena paralela (stepOrder: 0 para ambos): cualquiera puede aprobar primero
+      const chain = [
+        { id: adminUser?.id || approverId, name: adminUser?.name || 'Administrador', role: 'Administrador', area: 'Dirección General', stepOrder: 0 },
+        ...(legalUser ? [{ id: legalUser.id, name: legalUser.name, role: 'Jurídica', area: 'Jurídica', stepOrder: 0 }] : []),
+      ]
 
       await submitForApproval({
         domain: 'candidate',
@@ -104,7 +112,7 @@ export default function CandidatesAdmin() {
         requestedBy: user.name,
         requestedByRole: 'Reclutamiento',
         creatorSeal,
-        chain: [{ id: approverId, name: approver?.name || 'Administrador', role: 'Administrador', area: 'Dirección General' }],
+        chain,
       })
 
       closeApprove()

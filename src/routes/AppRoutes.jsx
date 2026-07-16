@@ -126,6 +126,7 @@ export default function AppRoutes() {
         <Route path="contratos" element={<ContractIssuance />} />
         <Route path="editor-documentos" element={<DocumentEditor />} />
         <Route path="aprobaciones" element={<LegalApprovals />} />
+        <Route path="aprobaciones-aspirantes" element={<CandidateApprovals />} />
         <Route path="documentos-por-firmar" element={<DocumentApprovals />} />
         <Route path="actividades" element={<Activities />} />
         <Route path="aspirantes" element={<CandidatesAdmin />} />
