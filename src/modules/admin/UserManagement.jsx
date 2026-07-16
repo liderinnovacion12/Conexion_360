@@ -202,7 +202,7 @@ export default function UserManagement() {
     {
       key: 'role',
       header: 'Rol',
-      render: (u) => <Badge variant="violet" dot>{ROLE_META[u.role].label}</Badge>,
+      render: (u) => <Badge variant="violet" dot>{ROLE_META[u.role]?.label ?? u.role}</Badge>,
     },
     { key: 'area', header: 'Área' },
     {
@@ -241,7 +241,7 @@ export default function UserManagement() {
             exportToCSV('usuarios_conexion360.csv', users, [
               { key: 'name', label: 'Nombre' },
               { key: 'email', label: 'Correo' },
-              { key: 'role', label: 'Rol', value: (u) => ROLE_META[u.role].label },
+              { key: 'role', label: 'Rol', value: (u) => ROLE_META[u.role]?.label ?? u.role },
               { key: 'area', label: 'Área' },
             ])
           }
