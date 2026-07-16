@@ -241,7 +241,23 @@ export function AuthProvider({ children }) {
     [user]
   )
 
-  const value = { user, loading, login, logout, register, changePassword, isAuthenticated: !!user }
+  const requestPasswordReset = useCallback(async (email) => {
+    if (!USE_SUPABASE) {
+      throw new Error('La recuperación de contraseña requiere el backend de Supabase. Contacta al administrador.')
+    }
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    })
+    if (error) throw new Error('No se pudo enviar el correo de recuperación. Verifica el correo ingresado.')
+  }, [])
+
+  const confirmPasswordReset = useCallback(async (newPassword) => {
+    if (!USE_SUPABASE) throw new Error('Requiere Supabase.')
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    if (error) throw new Error('No se pudo actualizar la contraseña. El enlace puede haber expirado.')
+  }, [])
+
+  const value = { user, loading, login, logout, register, changePassword, requestPasswordReset, confirmPasswordReset, isAuthenticated: !!user }
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 

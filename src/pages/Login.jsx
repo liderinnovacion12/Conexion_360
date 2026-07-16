@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, Navigate, Link } from 'react-router-dom'
-import { LogIn, Mail, Lock, Eye, EyeOff, Sun, Moon } from 'lucide-react'
+import { LogIn, Mail, Lock, Eye, EyeOff, Sun, Moon, ArrowLeft, Send } from 'lucide-react'
 import AnimatedLogo from '../assets/AnimatedLogo.jsx'
 import { LogoFull } from '../assets/Logo.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
@@ -11,7 +11,7 @@ import Button from '../components/ui/Button.jsx'
 import { Field, Input } from '../components/ui/Form.jsx'
 
 export default function Login() {
-  const { login, isAuthenticated, user } = useAuth()
+  const { login, isAuthenticated, user, requestPasswordReset } = useAuth()
   const { theme, toggleTheme } = useTheme()
   const { users } = useUsers()
   const navigate = useNavigate()
@@ -20,6 +20,13 @@ export default function Login() {
   const [show, setShow] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  // Recuperación de contraseña
+  const [forgotMode, setForgotMode] = useState(false)
+  const [resetEmail, setResetEmail] = useState('')
+  const [resetSent, setResetSent] = useState(false)
+  const [resetLoading, setResetLoading] = useState(false)
+  const [resetError, setResetError] = useState('')
 
   if (isAuthenticated) return <Navigate to={roleHome(user.role)} replace />
 
@@ -41,6 +48,28 @@ export default function Login() {
     setEmail(u.email)
     setPassword('Conexion360')
     setError('')
+  }
+
+  const openForgot = () => {
+    setResetEmail(email)
+    setResetSent(false)
+    setResetError('')
+    setForgotMode(true)
+  }
+
+  const submitReset = async (e) => {
+    e.preventDefault()
+    if (!resetEmail.trim()) return
+    setResetLoading(true)
+    setResetError('')
+    try {
+      await requestPasswordReset(resetEmail.trim())
+      setResetSent(true)
+    } catch (err) {
+      setResetError(err.message)
+    } finally {
+      setResetLoading(false)
+    }
   }
 
   return (
@@ -77,54 +106,117 @@ export default function Login() {
           <h2>Bienvenido de nuevo</h2>
           <p className="sub">Ingresa a tu panel según tu rol asignado.</p>
 
-          <form className="col gap-3" onSubmit={submit}>
-            <Field label="Correo electrónico" required>
-              <div style={{ position: 'relative' }}>
-                <Mail size={16} style={{ position: 'absolute', left: 12, top: 12, color: 'var(--text-dim)' }} />
-                <Input
-                  type="email"
-                  required
-                  placeholder="tucorreo@conexion360.co"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  style={{ paddingLeft: 36 }}
-                />
-              </div>
-            </Field>
+          {!forgotMode ? (
+            /* ── Formulario de inicio de sesión ── */
+            <form className="col gap-3" onSubmit={submit}>
+              <Field label="Correo electrónico" required>
+                <div style={{ position: 'relative' }}>
+                  <Mail size={16} style={{ position: 'absolute', left: 12, top: 12, color: 'var(--text-dim)' }} />
+                  <Input
+                    type="email"
+                    required
+                    placeholder="tucorreo@conexion360.co"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    style={{ paddingLeft: 36 }}
+                  />
+                </div>
+              </Field>
 
-            <Field label="Contraseña" required>
-              <div style={{ position: 'relative' }}>
-                <Lock size={16} style={{ position: 'absolute', left: 12, top: 12, color: 'var(--text-dim)' }} />
-                <Input
-                  type={show ? 'text' : 'password'}
-                  required
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  style={{ paddingLeft: 36, paddingRight: 38 }}
-                />
+              <Field label="Contraseña" required>
+                <div style={{ position: 'relative' }}>
+                  <Lock size={16} style={{ position: 'absolute', left: 12, top: 12, color: 'var(--text-dim)' }} />
+                  <Input
+                    type={show ? 'text' : 'password'}
+                    required
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    style={{ paddingLeft: 36, paddingRight: 38 }}
+                  />
+                  <button
+                    type="button"
+                    className="icon-btn"
+                    onClick={() => setShow((s) => !s)}
+                    style={{ position: 'absolute', right: 4, top: 3 }}
+                    aria-label="Mostrar contraseña"
+                  >
+                    {show ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </Field>
+
+              <div style={{ textAlign: 'right', marginTop: -8 }}>
                 <button
                   type="button"
-                  className="icon-btn"
-                  onClick={() => setShow((s) => !s)}
-                  style={{ position: 'absolute', right: 4, top: 3 }}
-                  aria-label="Mostrar contraseña"
+                  onClick={openForgot}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)', fontSize: '0.82rem', padding: 0 }}
                 >
-                  {show ? <EyeOff size={16} /> : <Eye size={16} />}
+                  ¿Olvidaste tu contraseña?
                 </button>
               </div>
-            </Field>
 
-            {error && <div className="alert alert--danger" style={{ padding: '10px 12px' }}>{error}</div>}
+              {error && <div className="alert alert--danger" style={{ padding: '10px 12px' }}>{error}</div>}
 
-            <Button type="submit" variant="primary" icon={LogIn} disabled={loading} className="full">
-              {loading ? 'Ingresando…' : 'Iniciar sesión'}
-            </Button>
+              <Button type="submit" variant="primary" icon={LogIn} disabled={loading} className="full">
+                {loading ? 'Ingresando…' : 'Iniciar sesión'}
+              </Button>
 
-            <p className="sub" style={{ textAlign: 'center', marginTop: 2 }}>
-              ¿Eres aspirante y quieres postularte? <Link to="/registro">Regístrate aquí</Link>
-            </p>
-          </form>
+              <p className="sub" style={{ textAlign: 'center', marginTop: 2 }}>
+                ¿Eres aspirante y quieres postularte? <Link to="/registro">Regístrate aquí</Link>
+              </p>
+            </form>
+          ) : (
+            /* ── Flujo de recuperación de contraseña ── */
+            <form className="col gap-3" onSubmit={submitReset}>
+              <button
+                type="button"
+                onClick={() => setForgotMode(false)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-soft)', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: 4, padding: 0, marginBottom: 4 }}
+              >
+                <ArrowLeft size={14} /> Volver al inicio de sesión
+              </button>
+
+              <div>
+                <h3 style={{ margin: '0 0 4px', fontSize: '1rem', fontWeight: 700 }}>Recuperar contraseña</h3>
+                <p className="sub" style={{ margin: 0 }}>
+                  Ingresa tu correo y te enviaremos un enlace para restablecer tu contraseña.
+                </p>
+              </div>
+
+              {!resetSent ? (
+                <>
+                  <Field label="Correo electrónico" required>
+                    <div style={{ position: 'relative' }}>
+                      <Mail size={16} style={{ position: 'absolute', left: 12, top: 12, color: 'var(--text-dim)' }} />
+                      <Input
+                        type="email"
+                        required
+                        placeholder="tucorreo@conexion360.co"
+                        value={resetEmail}
+                        onChange={(e) => setResetEmail(e.target.value)}
+                        style={{ paddingLeft: 36 }}
+                        autoFocus
+                      />
+                    </div>
+                  </Field>
+
+                  {resetError && <div className="alert alert--danger" style={{ padding: '10px 12px' }}>{resetError}</div>}
+
+                  <Button type="submit" variant="primary" icon={Send} disabled={resetLoading} className="full">
+                    {resetLoading ? 'Enviando…' : 'Enviar enlace de recuperación'}
+                  </Button>
+                </>
+              ) : (
+                <div className="alert alert--success" style={{ padding: '14px 16px' }}>
+                  <div style={{ fontWeight: 600, marginBottom: 4 }}>Correo enviado</div>
+                  <div style={{ fontSize: '0.85rem' }}>
+                    Revisa tu bandeja de entrada en <b>{resetEmail}</b> y sigue el enlace para crear una nueva contraseña. El enlace expira en 1 hora.
+                  </div>
+                </div>
+              )}
+            </form>
+          )}
 
         </div>
       </div>

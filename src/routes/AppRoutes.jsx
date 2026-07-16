@@ -4,6 +4,7 @@ import ProtectedRoute from './ProtectedRoute.jsx'
 import DashboardLayout from '../layouts/DashboardLayout.jsx'
 import Login from '../pages/Login.jsx'
 import Register from '../pages/Register.jsx'
+import ResetPassword from '../pages/ResetPassword.jsx'
 import { Forbidden, NotFound } from '../pages/ErrorPages.jsx'
 
 // Admin
@@ -73,6 +74,7 @@ export default function AppRoutes() {
     <Routes>
       <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/registro" element={<Register />} />
 
       {/* ---------- Administrador General ---------- */}

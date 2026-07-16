@@ -50,7 +50,7 @@ export default function CandidateDocuments() {
   // grupos del aspirante (en vez de la lista fija anterior).
   const myGroups = candidate ? groupsForCandidate(candidate.id) : []
   const groupIds = myGroups.map((g) => g.id)
-  const documentFields = resolveRequiredFields(candidate?.track, groupIds, templates, DOCUMENT_TYPES).filter(
+  const documentFields = resolveRequiredFields(candidate?.track, groupIds, templates, DOCUMENT_TYPES, candidate?.id).filter(
     (f) => f.type === 'document' || !f.type
   )
 

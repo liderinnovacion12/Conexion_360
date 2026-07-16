@@ -1,11 +1,10 @@
-// Resuelve los campos/documentos requeridos para un aspirante según su vía
-// (funcionario/contratista) y los grupos a los que pertenece. Las plantillas
-// de grupo agregan o ajustan campos sobre la plantilla base de la vía.
-// Si no hay plantilla base para la vía, se usa `fallbackFields` (compatibilidad
-// con el antiguo DOCUMENT_TYPES fijo, para no romper candidatos existentes).
-export function resolveRequiredFields(track, groupIds = [], templates = [], fallbackFields = []) {
-  const base = templates.find((t) => t.track === track && !t.groupId)
-  const groupTemplates = templates.filter((t) => t.groupId && groupIds.includes(t.groupId))
+// Resuelve los campos/documentos requeridos para un aspirante según su vía,
+// sus grupos y (opcionalmente) un override individual por aspirante.
+// Prioridad: override candidato > grupo > plantilla base > fallback.
+export function resolveRequiredFields(track, groupIds = [], templates = [], fallbackFields = [], candidateId = null) {
+  const base = templates.find((t) => t.track === track && !t.groupId && !t.candidateId)
+  const groupTemplates = templates.filter((t) => t.groupId && groupIds.includes(t.groupId) && !t.candidateId)
+  const candidateOverride = candidateId ? templates.find((t) => t.candidateId === candidateId) : null
 
   const fields = [...(base ? base.fields : fallbackFields)]
   const byKey = new Map(fields.map((f) => [f.key, f]))
@@ -15,6 +14,12 @@ export function resolveRequiredFields(track, groupIds = [], templates = [], fall
       byKey.set(f.key, { ...byKey.get(f.key), ...f })
     })
   })
+
+  if (candidateOverride) {
+    candidateOverride.fields.forEach((f) => {
+      byKey.set(f.key, { ...byKey.get(f.key), ...f })
+    })
+  }
 
   return [...byKey.values()]
 }
