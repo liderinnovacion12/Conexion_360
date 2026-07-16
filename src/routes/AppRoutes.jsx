@@ -25,6 +25,9 @@ import PayrollAnalytics from '../modules/finance/PayrollAnalytics.jsx'
 import Certificates from '../modules/finance/Certificates.jsx'
 import Clients from '../modules/finance/Clients.jsx'
 import Invoicing from '../modules/finance/Invoicing.jsx'
+// Permisos laborales
+import EmployeePermissions from '../modules/personnel/EmployeePermissions.jsx'
+import LeaveRequestsAdmin from '../modules/admin/LeaveRequestsAdmin.jsx'
 // Recruitment
 import RecruitmentDashboard from '../modules/recruitment/RecruitmentDashboard.jsx'
 import Pipeline from '../modules/recruitment/Pipeline.jsx'
@@ -78,6 +81,7 @@ export default function AppRoutes() {
         <Route path="usuarios" element={<UserManagement />} />
         <Route path="reclutamiento" element={<Pipeline />} />
         <Route path="aprobaciones-aspirantes" element={<CandidateApprovals />} />
+        <Route path="permisos" element={<LeaveRequestsAdmin />} />
         <Route path="nomina" element={<PersonnelRegistry />} />
         <Route path="documentos" element={<DocumentReview />} />
         <Route path="editor-documentos" element={<DocumentEditor />} />
@@ -148,6 +152,7 @@ export default function AppRoutes() {
         <Route path="contrato" element={<MyContract />} />
         <Route path="documentos" element={<EmployeeDocuments />} />
         <Route path="certificados" element={<EmployeeCertificates />} />
+        <Route path="permisos" element={<EmployeePermissions />} />
       </Route>
 
       {/* ---------- Cliente (vitrina de servicios) ---------- */}

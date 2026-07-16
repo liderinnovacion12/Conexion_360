@@ -39,6 +39,7 @@ export const NAV_CONFIG = {
     { section: 'Operación', items: [
       { to: '/admin/reclutamiento', label: 'Reclutamiento', icon: KanbanSquare },
       { to: '/admin/aprobaciones-aspirantes', label: 'Aprobación final de aspirantes', icon: BadgeCheck },
+      { to: '/admin/permisos', label: 'Solicitudes de permisos', icon: CheckSquare },
       { to: '/admin/nomina', label: 'Nómina y personal', icon: Wallet },
       { to: '/admin/documentos', label: 'Documentos', icon: FolderOpen },
       { to: '/admin/editor-documentos', label: 'Editor de documentos', icon: FileSignature },
@@ -118,6 +119,7 @@ export const NAV_CONFIG = {
       { to: '/personal/contrato', label: 'Mi contrato', icon: Briefcase },
       { to: '/personal/documentos', label: 'Mis documentos', icon: FileText },
       { to: '/personal/certificados', label: 'Certificados', icon: BadgeCheck },
+      { to: '/personal/permisos', label: 'Permisos', icon: CheckSquare },
     ]},
   ],
 
