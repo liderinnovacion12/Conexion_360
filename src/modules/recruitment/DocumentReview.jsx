@@ -16,7 +16,9 @@ import { useCandidates } from '../../hooks/useCandidates.js'
 import { useDocuments } from '../../hooks/useDocuments.js'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { resolveRequiredFields } from '../../utils/formTemplates.js'
-import { USE_SUPABASE } from '../../services/api.js'
+import { USE_SUPABASE, toggleGroupMembership } from '../../services/api.js'
+
+const RECHAZADOS_GROUP_ID = 'grp-rechazados'
 import { getSignedDocumentUrl } from '../../services/supabaseClient.js'
 
 export default function DocumentReview() {
@@ -32,6 +34,12 @@ export default function DocumentReview() {
   const { groupsForCandidate } = useCandidateGroups()
 
   const candName = (id) => candidates.find((c) => c.id === id)?.name || id
+
+  // Solo muestra documentos de aspirantes que ya están en algún grupo
+  const docsFiltered = docs.filter((d) => {
+    const gs = groupsForCandidate(d.candidateId)
+    return gs.length > 0 && !gs.every((g) => g.id === RECHAZADOS_GROUP_ID)
+  })
 
   // Determina si un documento es obligatorio según la plantilla vigente para
   // la vía/grupo del aspirante (en vez del valor fijo guardado al cargarlo).
@@ -64,6 +72,12 @@ export default function DocumentReview() {
 
   const review = async (status) => {
     await reviewDocument(active.id, { status, comment, reviewedByName: user.name })
+    // Al rechazar un documento, mover al aspirante al grupo Rechazados
+    if (status === 'rechazado' && USE_SUPABASE) {
+      try {
+        await toggleGroupMembership(active.candidateId, RECHAZADOS_GROUP_ID, false)
+      } catch { /* no crítico */ }
+    }
     setActive(null)
     setComment('')
   }
@@ -85,8 +99,14 @@ export default function DocumentReview() {
     <div className="page">
       <PageHeader title="Revisión documental" subtitle="Aprueba, rechaza o devuelve documentos con comentarios." />
 
+      {docs.length > 0 && docsFiltered.length === 0 && (
+        <AlertBanner variant="info" title="Sin documentos para revisar">
+          Todos los aspirantes con documentos pendientes aún no han sido asignados a un grupo. Asígnalos desde <b>Grupos de aspirantes</b> para que aparezcan aquí.
+        </AlertBanner>
+      )}
+
       <Card className="anim-up">
-        <DataTable columns={columns} data={docs} searchKeys={['type', 'status']} pageSize={9} />
+        <DataTable columns={columns} data={docsFiltered} searchKeys={['type', 'status']} pageSize={9} />
       </Card>
 
       <Modal

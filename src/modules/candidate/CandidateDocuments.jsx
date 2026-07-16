@@ -48,7 +48,8 @@ export default function CandidateDocuments() {
 
   // Documentos requeridos según la plantilla vigente para la vía y los
   // grupos del aspirante (en vez de la lista fija anterior).
-  const groupIds = candidate ? groupsForCandidate(candidate.id).map((g) => g.id) : []
+  const myGroups = candidate ? groupsForCandidate(candidate.id) : []
+  const groupIds = myGroups.map((g) => g.id)
   const documentFields = resolveRequiredFields(candidate?.track, groupIds, templates, DOCUMENT_TYPES).filter(
     (f) => f.type === 'document' || !f.type
   )
@@ -84,7 +85,8 @@ export default function CandidateDocuments() {
 
   const hasProfile = profileComplete(candidate)
   const hasAuth = authorizationSigned(candidate)
-  const canUpload = hasProfile && hasAuth
+  const hasGroup = myGroups.length > 0
+  const canUpload = hasProfile && hasAuth && hasGroup
   const allRequiredUploaded = requiredDocsUploaded(docs)
 
   return (
@@ -98,6 +100,12 @@ export default function CandidateDocuments() {
             Mis datos personales
           </Link>{' '}
           antes de poder cargar documentos.
+        </AlertBanner>
+      )}
+
+      {hasProfile && hasAuth && !hasGroup && (
+        <AlertBanner variant="warning" title="Aún no estás asignado a un grupo">
+          Un reclutador debe asignarte a un grupo de aspirantes antes de que puedas cargar documentos. Contacta al área de Reclutamiento.
         </AlertBanner>
       )}
 

@@ -74,9 +74,9 @@ export const NAV_CONFIG = {
   [ROLES.RECRUITMENT]: [
     { section: 'Reclutamiento', items: [
       { to: '/reclutamiento', label: 'Tablero', icon: LayoutDashboard, end: true },
+      { to: '/reclutamiento/grupos', label: 'Grupos de aspirantes', icon: UsersRound },
       { to: '/reclutamiento/pipeline', label: 'Pipeline', icon: KanbanSquare },
       { to: '/reclutamiento/aspirantes', label: 'Aspirantes (contratistas y funcionarios)', icon: UserPlus },
-      { to: '/reclutamiento/grupos', label: 'Grupos de aspirantes', icon: UsersRound },
       { to: '/reclutamiento/formularios', label: 'Constructor de formularios', icon: ListChecks },
       { to: '/reclutamiento/documentos', label: 'Revisión documental', icon: ClipboardCheck },
       { to: '/reclutamiento/editor-documentos', label: 'Editor de documentos', icon: FileSignature },
