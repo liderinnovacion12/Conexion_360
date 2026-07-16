@@ -58,9 +58,8 @@ import ContractToSign from '../modules/personnel/ContractToSign.jsx'
 // Cliente
 import ServicesShowcase from '../modules/client/ServicesShowcase.jsx'
 import MyRequests from '../modules/client/MyRequests.jsx'
-// Auditor
-import AuditorDashboard from '../modules/dashboard/AuditorDashboard.jsx'
-import Compliance from '../modules/dashboard/Compliance.jsx'
+// Auditoría Admin
+import AdminAudit from '../modules/admin/AdminAudit.jsx'
 
 // Helper para envolver un grupo de rutas con layout + RBAC.
 const Protected = ({ allow }) => (
@@ -92,6 +91,7 @@ export default function AppRoutes() {
         <Route path="cursos" element={<CourseAssignment />} />
         <Route path="solicitudes-clientes" element={<ClientRequests />} />
         <Route path="auditoria" element={<AuditLogs />} />
+        <Route path="auditar" element={<AdminAudit />} />
         <Route path="permisos" element={<Permissions />} />
         <Route path="configuracion" element={<Settings />} />
       </Route>
@@ -162,13 +162,6 @@ export default function AppRoutes() {
       <Route path="/cliente" element={<Protected allow={[ROLES.CLIENT]} />}>
         <Route index element={<ServicesShowcase />} />
         <Route path="solicitudes" element={<MyRequests />} />
-      </Route>
-
-      {/* ---------- Auditor / Consulta ---------- */}
-      <Route path="/auditoria" element={<Protected allow={[ROLES.AUDITOR, ROLES.ADMIN]} />}>
-        <Route index element={<AuditorDashboard />} />
-        <Route path="registros" element={<AuditLogs readOnly />} />
-        <Route path="cumplimiento" element={<Compliance />} />
       </Route>
 
       {/* ---------- Errores ---------- */}

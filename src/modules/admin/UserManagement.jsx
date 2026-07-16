@@ -30,6 +30,17 @@ export default function UserManagement() {
   const [createError, setCreateError] = useState(null)
   const [saveError, setSaveError] = useState(null)
   const [saving, setSaving] = useState(false)
+  const [toDelete, setToDelete] = useState(null)    // usuario a eliminar
+  const [deleteStep, setDeleteStep] = useState(1)   // 1 = primera confirmación, 2 = segunda
+  const [deleting, setDeleting] = useState(false)
+
+  const openDelete = (u) => { setToDelete(u); setDeleteStep(1) }
+  const confirmDelete = async () => {
+    if (deleteStep === 1) { setDeleteStep(2); return }
+    setDeleting(true)
+    try { await removeUser(toDelete.id) } finally { setDeleting(false); setToDelete(null) }
+  }
+
   const [promoting, setPromoting] = useState(null)   // usuario aspirante a promover
   const [promoForm, setPromoForm] = useState(emptyPromotion)
   const [promoError, setPromoError] = useState(null)
@@ -207,7 +218,7 @@ export default function UserManagement() {
               Promover
             </Button>
           )}
-          <Button size="sm" variant="ghost" icon={Trash2} onClick={() => removeUser(u.id)} />
+          <Button size="sm" variant="ghost" icon={Trash2} onClick={() => openDelete(u)} />
         </div>
       ),
     },
@@ -405,6 +416,42 @@ export default function UserManagement() {
               <div className="stat-row"><span className="muted">Contraseña temporal</span><b>{resetDone.password}</b></div>
             </div>
           </div>
+        )}
+      </Modal>
+
+      {/* ---- Doble confirmación: eliminar perfil ---- */}
+      <Modal
+        open={!!toDelete}
+        onClose={() => setToDelete(null)}
+        title={deleteStep === 1 ? 'Eliminar perfil' : '⚠ Confirmación final'}
+        width={460}
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setToDelete(null)}>Cancelar</Button>
+            <Button variant="danger" icon={Trash2} onClick={confirmDelete} disabled={deleting}>
+              {deleting ? 'Eliminando…' : deleteStep === 1 ? 'Sí, continuar' : 'Eliminar definitivamente'}
+            </Button>
+          </>
+        }
+      >
+        {toDelete && deleteStep === 1 && (
+          <div className="col gap-3">
+            <AlertBanner variant="warning" title="¿Estás seguro?">
+              Vas a eliminar el perfil de <b>{toDelete.name}</b> ({toDelete.email}).
+              Esta acción es irreversible y borrará su acceso a la plataforma.
+            </AlertBanner>
+            <div className="glass-soft" style={{ padding: 14 }}>
+              <div className="stat-row"><span className="muted">Nombre</span><b>{toDelete.name}</b></div>
+              <div className="stat-row"><span className="muted">Correo</span><b>{toDelete.email}</b></div>
+              <div className="stat-row"><span className="muted">Rol</span><b>{ROLE_META[toDelete.role]?.label}</b></div>
+            </div>
+          </div>
+        )}
+        {toDelete && deleteStep === 2 && (
+          <AlertBanner variant="danger" title="Última confirmación requerida">
+            Confirmas que deseas <b>eliminar permanentemente</b> el perfil de <b>{toDelete.name}</b>.
+            No podrás recuperar esta cuenta.
+          </AlertBanner>
         )}
       </Modal>
     </div>

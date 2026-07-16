@@ -51,15 +51,6 @@ export const MOCK_USERS = [
     employeeId: 'p-001',
   },
   {
-    id: 'u-007',
-    name: 'Patricia León',
-    email: 'auditor@conexion360.co',
-    password: 'demo',
-    role: ROLES.AUDITOR,
-    avatar: 'PL',
-    area: 'Auditoría interna',
-  },
-  {
     id: 'u-008',
     name: 'Ricardo Vanegas',
     email: 'juridica@conexion360.co',

@@ -1,5 +1,6 @@
-import { useState } from 'react'
-import { CheckCircle2, XCircle, Undo2, FileText, History, Eye, Download } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { CheckCircle2, XCircle, Undo2, FileText, History, Eye, Download, X } from 'lucide-react'
 import PageHeader from '../../components/common/PageHeader.jsx'
 import { Card } from '../../components/ui/Card.jsx'
 import DataTable from '../../components/ui/DataTable.jsx'
@@ -31,15 +32,37 @@ export default function DocumentReview() {
   const [fileUrl, setFileUrl] = useState(null)
   const [fileError, setFileError] = useState(null)
   const { templates } = useFormTemplates()
-  const { groupsForCandidate } = useCandidateGroups()
+  const { groups, groupsForCandidate } = useCandidateGroups()
+  const [filterGroupId, setFilterGroupId] = useState(null)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const highlightCandidateId = searchParams.get('candidato')
 
   const candName = (id) => candidates.find((c) => c.id === id)?.name || id
 
-  // Solo muestra documentos de aspirantes que ya están en algún grupo
-  const docsFiltered = docs.filter((d) => {
+  // Solo muestra documentos de aspirantes que ya están en algún grupo (no rechazados)
+  const docsBase = docs.filter((d) => {
     const gs = groupsForCandidate(d.candidateId)
     return gs.length > 0 && !gs.every((g) => g.id === RECHAZADOS_GROUP_ID)
   })
+
+  // Filtro adicional por grupo seleccionado
+  const docsFiltered = filterGroupId
+    ? docsBase.filter((d) => groupsForCandidate(d.candidateId).some((g) => g.id === filterGroupId))
+    : docsBase
+
+  // Grupos que tienen al menos un documento en la vista
+  const activeGroups = groups.filter((g) =>
+    g.id !== RECHAZADOS_GROUP_ID &&
+    docsBase.some((d) => groupsForCandidate(d.candidateId).some((x) => x.id === g.id))
+  )
+
+  // Cuando llega ?candidato=ID desde el Pipeline, abrir su primer documento
+  useEffect(() => {
+    if (!highlightCandidateId || docs.length === 0) return
+    const firstDoc = docsBase.find((d) => d.candidateId === highlightCandidateId)
+    if (firstDoc) open(firstDoc)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [highlightCandidateId, docs.length])
 
   // Determina si un documento es obligatorio según la plantilla vigente para
   // la vía/grupo del aspirante (en vez del valor fijo guardado al cargarlo).
@@ -95,18 +118,66 @@ export default function DocumentReview() {
     )},
   ]
 
+  const highlightName = highlightCandidateId ? candName(highlightCandidateId) : null
+
   return (
     <div className="page">
       <PageHeader title="Revisión documental" subtitle="Aprueba, rechaza o devuelve documentos con comentarios." />
 
-      {docs.length > 0 && docsFiltered.length === 0 && (
+      {/* Banner cuando se viene desde el pipeline con un candidato resaltado */}
+      {highlightCandidateId && (
+        <AlertBanner variant="info" title={`Documentos de: ${highlightName}`}>
+          Mostrando y resaltando documentos de <b>{highlightName}</b> — llegaste desde el Pipeline.{' '}
+          <button
+            onClick={() => setSearchParams({})}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', textDecoration: 'underline', padding: 0 }}
+          >
+            Ver todos
+          </button>
+        </AlertBanner>
+      )}
+
+      {/* Filtros por grupo */}
+      {activeGroups.length > 0 && (
+        <div className="row gap-2" style={{ flexWrap: 'wrap', marginBottom: 12 }}>
+          <button
+            className={`pill-btn${!filterGroupId ? ' pill-btn--active' : ''}`}
+            onClick={() => setFilterGroupId(null)}
+          >
+            Todos
+          </button>
+          {activeGroups.map((g) => (
+            <button
+              key={g.id}
+              className={`pill-btn${filterGroupId === g.id ? ' pill-btn--active' : ''}`}
+              style={filterGroupId === g.id ? { '--pill-color': g.color } : { '--pill-color': g.color }}
+              onClick={() => setFilterGroupId(filterGroupId === g.id ? null : g.id)}
+            >
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: g.color, display: 'inline-block', marginRight: 6 }} />
+              {g.name}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {docs.length > 0 && docsBase.length === 0 && (
         <AlertBanner variant="info" title="Sin documentos para revisar">
           Todos los aspirantes con documentos pendientes aún no han sido asignados a un grupo. Asígnalos desde <b>Grupos de aspirantes</b> para que aparezcan aquí.
         </AlertBanner>
       )}
 
       <Card className="anim-up">
-        <DataTable columns={columns} data={docsFiltered} searchKeys={['type', 'status']} pageSize={9} />
+        <DataTable
+          columns={columns}
+          data={docsFiltered}
+          searchKeys={['type', 'status']}
+          pageSize={9}
+          getRowStyle={(d) =>
+            d.candidateId === highlightCandidateId
+              ? { background: 'rgba(74,158,255,0.12)', outline: '1px solid rgba(74,158,255,0.4)' }
+              : undefined
+          }
+        />
       </Card>
 
       <Modal

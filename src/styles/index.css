@@ -132,11 +132,11 @@
   --grad-navy-teal: linear-gradient(135deg, var(--navy-3) 0%, var(--teal-deep) 130%);
   --grad-navy-violet: linear-gradient(135deg, var(--navy-3) 0%, var(--violet) 130%);
 
-  /* --- Geometría --- */
-  --r-sm: 8px;
-  --r-md: 14px;
-  --r-lg: 20px;
-  --r-xl: 28px;
+  /* --- Geometría (radios más contenidos = aspecto más profesional) --- */
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-xl: 20px;
 
   --sidebar-w: 264px;
   --sidebar-w-collapsed: 78px;
@@ -300,8 +300,8 @@ button {
 .grid-2 { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
 .grid-3 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
 
-.page { padding: 26px clamp(16px, 3vw, 34px); max-width: 1480px; margin: 0 auto; }
-.page-head { margin-bottom: 22px; }
+.page { padding: 20px clamp(14px, 2.5vw, 28px); max-width: 1500px; margin: 0 auto; }
+.page-head { margin-bottom: 18px; }
 
 .divider { height: 1px; background: var(--glass-border); border: 0; margin: 16px 0; }
 

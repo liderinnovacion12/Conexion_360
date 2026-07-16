@@ -7,7 +7,6 @@ import {
   KanbanSquare,
   UserPlus,
   ClipboardCheck,
-  ShieldCheck,
   Settings,
   FileSignature,
   FolderOpen,
@@ -49,8 +48,8 @@ export const NAV_CONFIG = {
       { to: '/admin/solicitudes-clientes', label: 'Solicitudes de clientes', icon: Store },
     ]},
     { section: 'Sistema', items: [
+      { to: '/admin/auditar', label: 'Auditar', icon: ScrollText },
       { to: '/admin/actividades-sistema', label: 'Actividades del sistema', icon: Activity },
-      { to: '/admin/auditoria', label: 'Auditoría', icon: ScrollText },
       { to: '/admin/permisos', label: 'Permisos', icon: Lock },
       { to: '/admin/configuracion', label: 'Configuración', icon: Settings },
     ]},
@@ -132,11 +131,4 @@ export const NAV_CONFIG = {
     ]},
   ],
 
-  [ROLES.AUDITOR]: [
-    { section: 'Consulta', items: [
-      { to: '/auditoria', label: 'Tablero analítico', icon: LayoutDashboard, end: true },
-      { to: '/auditoria/registros', label: 'Registros de auditoría', icon: ScrollText },
-      { to: '/auditoria/cumplimiento', label: 'Cumplimiento documental', icon: ShieldCheck },
-    ]},
-  ],
 }

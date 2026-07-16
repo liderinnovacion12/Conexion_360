@@ -33,8 +33,4 @@ export const NOTIFICATIONS = {
     { id: 1, title: 'Tu solicitud de servicio fue recibida', time: 'Hace 2 h', color: '#19E3D9', read: false },
     { id: 2, title: 'Un asesor comercial te contactará pronto', time: 'Ayer', color: '#2EE6A6', read: true },
   ],
-  [ROLES.AUDITOR]: [
-    { id: 1, title: 'Nuevo reporte de cumplimiento disponible', time: 'Hace 1 h', color: '#19E3D9', read: false },
-    { id: 2, title: '5 documentos vencidos detectados', time: 'Hace 4 h', color: '#FF5D73', read: true },
-  ],
 }

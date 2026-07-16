@@ -12,6 +12,7 @@ export default function DataTable({
   toolbar,
   onExport,
   emptyText = 'Sin registros para mostrar.',
+  getRowStyle,
 }) {
   const [query, setQuery] = useState('')
   const [sort, setSort] = useState({ key: null, dir: 'asc' })
@@ -112,7 +113,7 @@ export default function DataTable({
               </tr>
             ) : (
               pageRows.map((row, i) => (
-                <tr key={row.id ?? i}>
+                <tr key={row.id ?? i} style={getRowStyle ? getRowStyle(row) : undefined}>
                   {columns.map((c) => (
                     <td key={c.key} className={c.strong ? 'strong' : ''}>
                       {c.render ? c.render(row) : row[c.key]}

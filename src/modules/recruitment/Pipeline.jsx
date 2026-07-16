@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { BookOpen, CheckCircle2, Clock } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { BookOpen, CheckCircle2, Clock, ExternalLink } from 'lucide-react'
 import PageHeader from '../../components/common/PageHeader.jsx'
 import Badge from '../../components/ui/Badge.jsx'
 import { useCandidates } from '../../hooks/useCandidates.js'
@@ -52,6 +53,7 @@ const DOC_STAGE_LABEL = {
 }
 
 export default function Pipeline() {
+  const navigate = useNavigate()
   const { candidates, moveStage } = useCandidates()
   const { courses, progress } = useCourses()
   const [dragId, setDragId] = useState(null)
@@ -104,13 +106,17 @@ export default function Pipeline() {
                 {colItems.map((c) => {
                   const info = col.id === 'cursos' ? courseOf(c.id) : null
 
+                  const isApto = col.id === 'aptos'
+
                   return (
                     <div
                       key={c.id}
-                      className={`pipeline-card${dragId === c.id ? ' pipeline-card--dragging' : ''}`}
+                      className={`pipeline-card${dragId === c.id ? ' pipeline-card--dragging' : ''}${isApto ? ' pipeline-card--link' : ''}`}
                       draggable
                       onDragStart={() => setDragId(c.id)}
                       onDragEnd={() => setDragId(null)}
+                      onClick={isApto ? () => navigate(`/reclutamiento/documentos?candidato=${c.id}`) : undefined}
+                      title={isApto ? 'Ver documentos de este aspirante' : undefined}
                     >
                       <div className="pipeline-card-name">{c.name}</div>
                       {c.position && (
@@ -136,10 +142,11 @@ export default function Pipeline() {
                         </div>
                       )}
 
-                      {col.id === 'aptos' && (
-                        <Badge variant="success" dot style={{ marginTop: 6 }}>
-                          Preaprobado
-                        </Badge>
+                      {isApto && (
+                        <div className="row between" style={{ marginTop: 6, alignItems: 'center' }}>
+                          <Badge variant="success" dot>Preaprobado</Badge>
+                          <ExternalLink size={12} style={{ opacity: 0.5 }} />
+                        </div>
                       )}
 
                       {col.id === 'rechazados' && (

@@ -10,7 +10,6 @@ export const ROLES = {
   CANDIDATE: 'candidate',
   EMPLOYEE: 'employee',
   CLIENT: 'client',
-  AUDITOR: 'auditor',
 }
 
 // Metadatos visuales y de presentación por rol
@@ -22,7 +21,6 @@ export const ROLE_META = {
   [ROLES.CANDIDATE]: { label: 'Aspirante', short: 'Aspirante', color: '#2EE6A6', home: '/aspirante' },
   [ROLES.EMPLOYEE]: { label: 'Personal Activo', short: 'Personal', color: '#FFC857', home: '/personal' },
   [ROLES.CLIENT]: { label: 'Cliente', short: 'Cliente', color: '#FF8FB1', home: '/cliente' },
-  [ROLES.AUDITOR]: { label: 'Auditor / Consulta', short: 'Auditor', color: '#7BD0FF', home: '/auditoria' },
 }
 
 export const roleHome = (role) => ROLE_META[role]?.home || '/login'
