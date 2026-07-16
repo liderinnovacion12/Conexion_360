@@ -17,9 +17,9 @@ import { useDocuments } from '../../hooks/useDocuments.js'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { resolveRequiredFields } from '../../utils/formTemplates.js'
 import { USE_SUPABASE, toggleGroupMembership } from '../../services/api.js'
+import { getSignedDocumentUrl } from '../../services/supabaseClient.js'
 
 const RECHAZADOS_GROUP_ID = 'grp-rechazados'
-import { getSignedDocumentUrl } from '../../services/supabaseClient.js'
 
 export default function DocumentReview() {
   const { user } = useAuth()

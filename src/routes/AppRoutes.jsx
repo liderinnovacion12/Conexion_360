@@ -33,6 +33,7 @@ import DocumentReview from '../modules/recruitment/DocumentReview.jsx'
 import CourseAssignment from '../modules/recruitment/CourseAssignment.jsx'
 import CandidateGroups from '../modules/recruitment/CandidateGroups.jsx'
 import FormBuilder from '../modules/recruitment/FormBuilder.jsx'
+import RecruitmentApprovals from '../modules/recruitment/RecruitmentApprovals.jsx'
 // Legal
 import LegalDashboard from '../modules/legal/LegalDashboard.jsx'
 import ContractTemplates from '../modules/legal/ContractTemplates.jsx'
@@ -112,7 +113,7 @@ export default function AppRoutes() {
         <Route path="formularios" element={<FormBuilder />} />
         <Route path="documentos" element={<DocumentReview />} />
         <Route path="editor-documentos" element={<DocumentEditor />} />
-        <Route path="aprobaciones" element={<LegalApprovals />} />
+        <Route path="aprobaciones" element={<RecruitmentApprovals />} />
         <Route path="documentos-por-firmar" element={<DocumentApprovals />} />
         <Route path="actividades" element={<Activities />} />
         <Route path="cursos" element={<CourseAssignment />} />

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { UserPlus, Pencil, Shield, Trash2, KeyRound } from 'lucide-react'
+import { UserPlus, Pencil, Shield, Trash2, KeyRound, ArrowUpRight } from 'lucide-react'
 import PageHeader from '../../components/common/PageHeader.jsx'
 import { Card } from '../../components/ui/Card.jsx'
 import DataTable from '../../components/ui/DataTable.jsx'
@@ -9,14 +9,20 @@ import Badge from '../../components/ui/Badge.jsx'
 import { Field, Input, Select } from '../../components/ui/Form.jsx'
 import { AlertBanner } from '../../components/ui/Feedback.jsx'
 import { useUsers } from '../../hooks/useUsers.js'
+import { usePersonnel } from '../../hooks/usePersonnel.js'
+import { useCandidates } from '../../hooks/useCandidates.js'
 import { ROLE_META, ROLES } from '../../utils/roles.js'
+import { CONTRACT_TYPES } from '../../data/mockPersonnel.js'
 import { exportToCSV } from '../../utils/pdf.js'
 import { USE_SUPABASE } from '../../services/api.js'
 
 const emptyForm = { name: '', email: '', role: ROLES.EMPLOYEE, area: '' }
+const emptyPromotion = { position: '', contract: CONTRACT_TYPES[0], salary: '', area: '', start: '' }
 
 export default function UserManagement() {
   const { users, addUser, updateUser, removeUser, adminUpdateCredentials } = useUsers()
+  const { addPersonnel } = usePersonnel()
+  const { candidates } = useCandidates()
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState(emptyForm)
@@ -24,6 +30,61 @@ export default function UserManagement() {
   const [createError, setCreateError] = useState(null)
   const [saveError, setSaveError] = useState(null)
   const [saving, setSaving] = useState(false)
+  const [promoting, setPromoting] = useState(null)   // usuario aspirante a promover
+  const [promoForm, setPromoForm] = useState(emptyPromotion)
+  const [promoError, setPromoError] = useState(null)
+  const [promoSaving, setPromoSaving] = useState(false)
+  const [promoDone, setPromoDone] = useState(null)    // nombre ya promovido
+
+  const openPromote = (u) => {
+    const candidate = candidates.find((c) => c.id === u.candidateId)
+    setPromoting(u)
+    setPromoForm({
+      ...emptyPromotion,
+      position: candidate?.position || '',
+      area: u.area || candidate?.city || '',
+    })
+    setPromoError(null)
+    setPromoDone(null)
+  }
+
+  const confirmPromote = async () => {
+    if (!promoting) return
+    if (!promoForm.position || !promoForm.start) {
+      setPromoError('El cargo y la fecha de inicio son obligatorios.')
+      return
+    }
+    setPromoSaving(true)
+    setPromoError(null)
+    try {
+      const candidate = candidates.find((c) => c.id === promoting.candidateId)
+      // 1. Crear registro de personal con los datos del aspirante
+      const personnel = await addPersonnel({
+        doc: candidate?.doc || promoting.doc || '',
+        name: promoting.name,
+        position: promoForm.position,
+        contract: promoForm.contract,
+        salary: promoForm.salary ? Number(promoForm.salary) : 0,
+        state: 'Activo',
+        start: promoForm.start,
+        end: null,
+        area: promoForm.area,
+      })
+      // 2. Cambiar el rol del perfil de candidato a empleado y enlazar el ID
+      await updateUser(promoting.id, {
+        role: ROLES.EMPLOYEE,
+        area: promoForm.area,
+        employeeId: personnel.id,
+      })
+      setPromoDone(promoting.name)
+      setPromoting(null)
+    } catch (err) {
+      setPromoError(err.message || 'No se pudo completar la promoción.')
+    } finally {
+      setPromoSaving(false)
+    }
+  }
+
   const [resetting, setResetting] = useState(null) // usuario al que se le está restableciendo la clave
   const [resetPassword, setResetPassword] = useState('')
   const [resetError, setResetError] = useState(null)
@@ -140,6 +201,11 @@ export default function UserManagement() {
         <div className="row gap-1">
           <Button size="sm" variant="ghost" icon={Pencil} onClick={() => openEdit(u)}>Editar</Button>
           <Button size="sm" variant="ghost" icon={KeyRound} onClick={() => askReset(u)} title="Restablecer contraseña">Clave</Button>
+          {u.role === ROLES.CANDIDATE && (
+            <Button size="sm" variant="ghost" icon={ArrowUpRight} onClick={() => openPromote(u)} title="Promover a Personal">
+              Promover
+            </Button>
+          )}
           <Button size="sm" variant="ghost" icon={Trash2} onClick={() => removeUser(u.id)} />
         </div>
       ),
@@ -218,6 +284,80 @@ export default function UserManagement() {
               <Input value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value })} placeholder="Ej: Operaciones" />
             </Field>
           </div>
+        )}
+      </Modal>
+
+      {/* ---- Modal: promover aspirante a personal ---- */}
+      <Modal
+        open={!!promoting}
+        onClose={() => setPromoting(null)}
+        title="Promover a Personal"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setPromoting(null)}>Cancelar</Button>
+            <Button variant="primary" icon={ArrowUpRight} onClick={confirmPromote} disabled={promoSaving}>
+              {promoSaving ? 'Promoviendo…' : 'Confirmar promoción'}
+            </Button>
+          </>
+        }
+      >
+        {promoting && (
+          <div className="col gap-3">
+            <AlertBanner variant="info" title={`Vas a promover a ${promoting.name}`}>
+              Su rol cambiará de <b>Aspirante</b> a <b>Personal</b> y se creará su registro en nómina.
+            </AlertBanner>
+            {promoError && <AlertBanner variant="danger">{promoError}</AlertBanner>}
+            <Field label="Cargo / posición" required>
+              <Input
+                value={promoForm.position}
+                onChange={(e) => setPromoForm({ ...promoForm, position: e.target.value })}
+                placeholder="Ej: Operario de Producción"
+              />
+            </Field>
+            <Field label="Tipo de contrato" required>
+              <Select
+                value={promoForm.contract}
+                onChange={(e) => setPromoForm({ ...promoForm, contract: e.target.value })}
+                options={CONTRACT_TYPES.map((c) => ({ value: c, label: c }))}
+              />
+            </Field>
+            <Field label="Salario (COP)" hint="Puedes dejarlo en 0 y ajustarlo luego en Nómina.">
+              <Input
+                type="number"
+                value={promoForm.salary}
+                onChange={(e) => setPromoForm({ ...promoForm, salary: e.target.value })}
+                placeholder="Ej: 2500000"
+              />
+            </Field>
+            <Field label="Área / departamento">
+              <Input
+                value={promoForm.area}
+                onChange={(e) => setPromoForm({ ...promoForm, area: e.target.value })}
+                placeholder="Ej: Operaciones"
+              />
+            </Field>
+            <Field label="Fecha de inicio" required>
+              <Input
+                type="date"
+                value={promoForm.start}
+                onChange={(e) => setPromoForm({ ...promoForm, start: e.target.value })}
+              />
+            </Field>
+          </div>
+        )}
+      </Modal>
+
+      {/* ---- Confirmación de promoción exitosa ---- */}
+      <Modal
+        open={!!promoDone}
+        onClose={() => setPromoDone(null)}
+        title="Promoción completada"
+        footer={<Button variant="primary" onClick={() => setPromoDone(null)}>Entendido</Button>}
+      >
+        {promoDone && (
+          <AlertBanner variant="success" title="Listo">
+            <b>{promoDone}</b> ahora tiene perfil de <b>Personal</b> y aparece en el módulo de Nómina y personal.
+          </AlertBanner>
         )}
       </Modal>
 
