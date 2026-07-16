@@ -109,6 +109,7 @@ export const NAV_CONFIG = {
       { to: '/aspirante/documentos', label: 'Mis documentos', icon: FileText },
       { to: '/aspirante/autorizacion', label: 'Autorización de datos', icon: FileSignature },
       { to: '/aspirante/cursos', label: 'Cursos asignados', icon: GraduationCap },
+      { to: '/aspirante/contrato-por-firmar', label: 'Contrato por firmar', icon: FileSignature },
     ]},
   ],
 
@@ -120,6 +121,7 @@ export const NAV_CONFIG = {
       { to: '/personal/documentos', label: 'Mis documentos', icon: FileText },
       { to: '/personal/certificados', label: 'Certificados', icon: BadgeCheck },
       { to: '/personal/permisos', label: 'Permisos', icon: CheckSquare },
+      { to: '/personal/contrato-por-firmar', label: 'Contrato por firmar', icon: FileSignature },
     ]},
   ],
 

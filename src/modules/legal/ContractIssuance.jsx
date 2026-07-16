@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState, useEffect } from 'react'
 import { Download, ShieldCheck, Send, FilePlus2 } from 'lucide-react'
 import PageHeader from '../../components/common/PageHeader.jsx'
 import { Card } from '../../components/ui/Card.jsx'
@@ -12,6 +12,7 @@ import ReAuthModal from '../../components/feature/ReAuthModal.jsx'
 import { LogoMark } from '../../assets/Logo.jsx'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { usePermissions } from '../../context/PermissionsContext.jsx'
+import { ROLES } from '../../utils/roles.js'
 import { useMySignatures } from '../../hooks/useMySignatures.js'
 import { useLegalTemplates } from '../../hooks/useLegalTemplates.js'
 import { useContracts } from '../../hooks/useContracts.js'
@@ -51,12 +52,17 @@ export default function ContractIssuance() {
   const [personId, setPersonId] = useState('')
   const [templateId, setTemplateId] = useState('')
   const [city, setCity] = useState('Bogotá D.C.')
+  const [cargo, setCargo] = useState('')
   const [fieldValues, setFieldValues] = useState({})
   const [signature, setSignature] = useState(null)
   const [submitted, setSubmitted] = useState(null)
   const [confirmSubmit, setConfirmSubmit] = useState(false)
 
   const person = PEOPLE.find((p) => p.id === personId)
+
+  useEffect(() => {
+    if (person) setCargo(person.cargo || '')
+  }, [personId]) // eslint-disable-line react-hooks/exhaustive-deps
   const template = templates.find((t) => t.id === templateId)
   const today = formatDate(new Date())
 
@@ -70,12 +76,12 @@ export default function ContractIssuance() {
     () => ({
       nombre: person?.name || '',
       documento: person?.doc || '',
-      cargo: person?.cargo || '',
+      cargo: cargo || person?.cargo || '',
       ciudad: city,
       fecha: today,
       ...fieldValues,
     }),
-    [person, city, today, fieldValues]
+    [person, cargo, city, today, fieldValues]
   )
 
   const filledBody = template ? fillTemplate(template.body, values) : ''
@@ -107,8 +113,18 @@ export default function ContractIssuance() {
       creatorSignature: signature,
     })
 
-    const approverId = AREA_APPROVERS['Jurídica / Contratos']
-    const approver = users.find((u) => u.id === approverId)
+    // Paso 0: la persona contratada firma primero
+    const personUserId = personId.startsWith('c:')
+      ? personId.slice(2)
+      : users.find((u) => u.employeeId === personId.slice(2))?.id
+    const adminUser = users.find((u) => u.role === ROLES.ADMIN)
+    const legalUser = users.find((u) => u.role === ROLES.LEGAL)
+
+    const chain = [
+      ...(personUserId ? [{ id: personUserId, name: person.name, role: 'Contratado/a', area: person.area || 'Personal', stepOrder: 0 }] : []),
+      ...(adminUser ? [{ id: adminUser.id, name: adminUser.name, role: 'Administrador', area: 'Dirección General', stepOrder: 1 }] : []),
+      ...(legalUser ? [{ id: legalUser.id, name: legalUser.name, role: 'Área Jurídica', area: 'Jurídica', stepOrder: 1 }] : []),
+    ]
 
     const approval = await submitForApproval({
       domain: 'contract',
@@ -119,7 +135,7 @@ export default function ContractIssuance() {
       requestedBy: user.name,
       requestedByRole: 'Área Jurídica',
       creatorSeal,
-      chain: [{ id: approverId, name: approver?.name || 'Líder Jurídica', role: 'Líder Jurídica', area: 'Jurídica / Contratos' }],
+      chain,
     })
 
     setSubmitted({ consecutive, date, code, approvalId: approval.id })
@@ -132,7 +148,7 @@ export default function ContractIssuance() {
   }
 
   const reset = () => {
-    setPersonId(''); setTemplateId(''); setFieldValues({}); setSignature(null); setSubmitted(null)
+    setPersonId(''); setTemplateId(''); setCargo(''); setFieldValues({}); setSignature(null); setSubmitted(null)
   }
 
   if (!canGenerate) {
@@ -180,6 +196,9 @@ export default function ContractIssuance() {
                 />
               </Field>
               <Field label="Ciudad"><Input value={city} onChange={(e) => setCity(e.target.value)} disabled={!!submitted} /></Field>
+              <Field label="Cargo / posición" required>
+                <Input value={cargo} onChange={(e) => setCargo(e.target.value)} disabled={!!submitted} placeholder="Ej: Técnico de sistemas" />
+              </Field>
 
               {extraPlaceholders.map((ph) => (
                 <Field label={ph.label} key={ph.key}>
@@ -195,9 +214,9 @@ export default function ContractIssuance() {
 
           <Card title="Firma de quien emite" subtitle="Área Jurídica">
             {submitted ? (
-              <AlertBanner variant="success" title="Contrato enviado a aprobación">
+              <AlertBanner variant="success" title="Contrato enviado a firma">
                 Consecutivo <b>{formatConsecutive(submitted.consecutive)}</b> · enviado el {formatDateTime(submitted.date)}.
-                Queda pendiente de la firma del aprobador designado.
+                Primero debe firmarlo <b>{person?.name}</b>; luego regresa al Admin y Jurídica para la firma final.
               </AlertBanner>
             ) : (
               <>

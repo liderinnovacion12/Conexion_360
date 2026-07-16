@@ -54,6 +54,7 @@ import EmployeeProfile from '../modules/personnel/EmployeeProfile.jsx'
 import EmployeeDocuments from '../modules/personnel/EmployeeDocuments.jsx'
 import EmployeeCertificates from '../modules/personnel/EmployeeCertificates.jsx'
 import MyContract from '../modules/personnel/MyContract.jsx'
+import ContractToSign from '../modules/personnel/ContractToSign.jsx'
 // Cliente
 import ServicesShowcase from '../modules/client/ServicesShowcase.jsx'
 import MyRequests from '../modules/client/MyRequests.jsx'
@@ -143,6 +144,7 @@ export default function AppRoutes() {
         <Route path="documentos" element={<CandidateDocuments />} />
         <Route path="autorizacion" element={<DataAuthorization />} />
         <Route path="cursos" element={<CandidateCourses />} />
+        <Route path="contrato-por-firmar" element={<ContractToSign />} />
       </Route>
 
       {/* ---------- Personal Activo (incluye prestación de servicios) ---------- */}
@@ -153,6 +155,7 @@ export default function AppRoutes() {
         <Route path="documentos" element={<EmployeeDocuments />} />
         <Route path="certificados" element={<EmployeeCertificates />} />
         <Route path="permisos" element={<EmployeePermissions />} />
+        <Route path="contrato-por-firmar" element={<ContractToSign />} />
       </Route>
 
       {/* ---------- Cliente (vitrina de servicios) ---------- */}

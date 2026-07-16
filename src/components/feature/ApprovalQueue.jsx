@@ -23,10 +23,10 @@ const STATUS_VARIANT = { pendiente: 'warning', aprobado: 'success', rechazado: '
 // documentos...). El documento se enruta por una CADENA de personas, una a
 // la vez — cada firma exige re-autenticación (usuario y clave) antes de
 // estampar el sello, para evitar falsificaciones.
-export default function ApprovalQueue({ domain, renderPreview, onApproved, onRejected, rejectLabel = 'Rechazar', rejectConfirmMessage }) {
+export default function ApprovalQueue({ domain, renderPreview, onApproved, onRejected, rejectLabel = 'Rechazar', rejectConfirmMessage, allowSign = false }) {
   const { user } = useAuth()
   const { hasCapability } = usePermissions()
-  const canApproveDocs = hasCapability(user?.id, 'canApprove')
+  const canApproveDocs = allowSign || hasCapability(user?.id, 'canApprove')
   const { approvals, approve, reject, currentStep, currentStepIndex } = useApprovals()
   const [library, setLibrary] = useMySignatures()
   const [active, setActive] = useState(null)
