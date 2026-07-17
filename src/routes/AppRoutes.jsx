@@ -1,10 +1,11 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route } from 'react-router-dom'
 import { ROLES } from '../utils/roles.js'
 import ProtectedRoute from './ProtectedRoute.jsx'
 import DashboardLayout from '../layouts/DashboardLayout.jsx'
 import Login from '../pages/Login.jsx'
 import Register from '../pages/Register.jsx'
 import ResetPassword from '../pages/ResetPassword.jsx'
+import LandingPage from '../pages/LandingPage.jsx'
 import { Forbidden, NotFound } from '../pages/ErrorPages.jsx'
 
 // Admin
@@ -72,7 +73,7 @@ const Protected = ({ allow }) => (
 export default function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<Login />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/registro" element={<Register />} />
