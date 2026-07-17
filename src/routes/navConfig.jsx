@@ -11,7 +11,6 @@ import {
   Settings,
   FileSignature,
   FolderOpen,
-  Briefcase,
   BadgeCheck,
   ScrollText,
   BarChart3,
