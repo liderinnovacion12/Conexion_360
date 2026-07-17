@@ -97,9 +97,23 @@ export function useNotifications() {
     try {
       await markNotificationRead(id)
     } catch {
-      // No es crítico si falla: la notificación sigue visible como no leída.
+      // No es crítico si falla.
     }
   }
+
+  // Marca todas las notificaciones no leídas como leídas de una vez
+  // (se llama al abrir el panel para que el puntico desaparezca).
+  const markAllRead = useCallback(async () => {
+    if (!USE_SUPABASE) return
+    const unreadIds = items.filter((n) => !n.read).map((n) => n.id)
+    if (unreadIds.length === 0) return
+    setItems((list) => list.map((n) => ({ ...n, read: true })))
+    try {
+      await Promise.all(unreadIds.map((id) => markNotificationRead(id)))
+    } catch {
+      // No es crítico.
+    }
+  }, [items])
 
   const dismissToast = () => setToast(null)
 
@@ -112,7 +126,7 @@ export function useNotifications() {
   const list = USE_SUPABASE ? items : mockItems
   const unreadCount = list.filter((n) => !n.read).length
 
-  return { notifications: list, unreadCount, loading, toast, dismissToast, markRead, reload }
+  return { notifications: list, unreadCount, loading, toast, dismissToast, markRead, markAllRead, reload }
 }
 
 function NOTIFICATIONS_FOR(role) {

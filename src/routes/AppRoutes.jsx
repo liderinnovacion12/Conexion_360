@@ -38,6 +38,7 @@ import DocumentReview from '../modules/recruitment/DocumentReview.jsx'
 import CourseAssignment from '../modules/recruitment/CourseAssignment.jsx'
 import CandidateGroups from '../modules/recruitment/CandidateGroups.jsx'
 import FormBuilder from '../modules/recruitment/FormBuilder.jsx'
+import JobPostings from '../modules/recruitment/JobPostings.jsx'
 import RecruitmentApprovals from '../modules/recruitment/RecruitmentApprovals.jsx'
 // Legal
 import LegalDashboard from '../modules/legal/LegalDashboard.jsx'
@@ -115,6 +116,7 @@ export default function AppRoutes() {
       {/* ---------- Área de Reclutamiento ---------- */}
       <Route path="/reclutamiento" element={<Protected allow={[ROLES.RECRUITMENT, ROLES.ADMIN]} />}>
         <Route index element={<RecruitmentDashboard />} />
+        <Route path="vacantes" element={<JobPostings />} />
         <Route path="pipeline" element={<Pipeline />} />
         <Route path="aspirantes" element={<CandidatesAdmin />} />
         <Route path="grupos" element={<CandidateGroups />} />

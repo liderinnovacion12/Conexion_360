@@ -103,6 +103,12 @@ export default function Login() {
       <div className="auth-panel">
         <div className="orb violet" style={{ opacity: 0.25 }} />
         <div className="auth-card glass">
+          <Link
+            to="/"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: '0.8rem', color: 'var(--text-soft)', textDecoration: 'none', marginBottom: 10 }}
+          >
+            ← Volver al inicio
+          </Link>
           <h2>Bienvenido de nuevo</h2>
           <p className="sub">Ingresa a tu panel según tu rol asignado.</p>
 

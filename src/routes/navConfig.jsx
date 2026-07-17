@@ -5,6 +5,7 @@ import {
   FileText,
   GraduationCap,
   KanbanSquare,
+  Briefcase,
   UserPlus,
   ClipboardCheck,
   Settings,
@@ -75,6 +76,7 @@ export const NAV_CONFIG = {
     { section: 'Reclutamiento', items: [
       { to: '/reclutamiento', label: 'Tablero', icon: LayoutDashboard, end: true },
       { to: '/reclutamiento/grupos', label: 'Grupos de aspirantes', icon: UsersRound },
+      { to: '/reclutamiento/vacantes', label: 'Publicar vacantes', icon: Briefcase },
       { to: '/reclutamiento/pipeline', label: 'Pipeline', icon: KanbanSquare },
       { to: '/reclutamiento/aspirantes', label: 'Aspirantes (contratistas y funcionarios)', icon: UserPlus },
       { to: '/reclutamiento/formularios', label: 'Constructor de formularios', icon: ListChecks },

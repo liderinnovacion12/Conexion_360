@@ -1,6 +1,9 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { Sun, Moon, MapPin, Clock, Users, ArrowRight } from 'lucide-react'
 import { LogoMark } from '../assets/Logo.jsx'
+import { useTheme } from '../context/ThemeContext.jsx'
+import { useJobPostings } from '../hooks/useJobPostings.js'
 import './LandingPage.css'
 
 function NavLogo() {
@@ -8,7 +11,7 @@ function NavLogo() {
     <Link className="lp-nav-logo" to="/">
       <LogoMark size={34} />
       <div className="lp-logo-wordmark">
-        <div className="lp-logo-name">CONEXIÓN <span className="grad">360</span></div>
+        <div className="lp-logo-name">CONEXIÓN <span className="lp-grad">360</span></div>
         <div className="lp-logo-sub">Todo Ágil CTA</div>
       </div>
     </Link>
@@ -20,21 +23,353 @@ function FooterLogo() {
     <Link className="lp-nav-logo" to="/" style={{ display: 'inline-flex', marginBottom: 4 }}>
       <LogoMark size={28} />
       <div className="lp-logo-wordmark">
-        <div className="lp-logo-name" style={{ fontSize: 13 }}>CONEXIÓN <span className="grad">360</span></div>
+        <div className="lp-logo-name" style={{ fontSize: 13 }}>CONEXIÓN <span className="lp-grad">360</span></div>
         <div className="lp-logo-sub">Todo Ágil CTA</div>
       </div>
     </Link>
   )
 }
 
+/* ── Sección de empleos públicos ── */
+const CONTRACT_LABELS = {
+  servicios: 'Prestación de servicios',
+  termino_fijo: 'Término fijo',
+  termino_indefinido: 'Término indefinido',
+  obra_labor: 'Obra o labor',
+  aprendizaje: 'Aprendizaje',
+}
+const MODALITY_LABELS = { presencial: 'Presencial', remoto: 'Remoto', hibrido: 'Híbrido' }
+
+function JobsSection() {
+  const { postings, loading } = useJobPostings()
+  const active = postings.filter((p) => p.status === 'activa')
+
+  return (
+    <section className="lp-section lp-section-surface" id="empleos">
+      <div className="lp-section-center lp-reveal" style={{ marginBottom: 44 }}>
+        <div className="lp-section-eyebrow">Empleos</div>
+        <h2 className="lp-section-title">Vacantes abiertas</h2>
+        <p className="lp-section-sub">
+          Explora las oportunidades disponibles y postúlate directamente desde la plataforma.
+        </p>
+      </div>
+
+      {loading && <div style={{ textAlign: 'center', color: 'var(--muted)', padding: 32 }}>Cargando vacantes…</div>}
+
+      {!loading && active.length === 0 && (
+        <div style={{ textAlign: 'center', color: 'var(--muted)', padding: '40px 20px' }}>
+          <div style={{ fontSize: '2rem', marginBottom: 12, opacity: 0.4 }}>💼</div>
+          <div style={{ fontWeight: 600, marginBottom: 6, color: 'var(--lp-text)' }}>No hay vacantes abiertas en este momento</div>
+          <div style={{ fontSize: '0.875rem' }}>Vuelve pronto o crea tu cuenta para que te notifiquemos cuando haya nuevas oportunidades.</div>
+        </div>
+      )}
+
+      <div className="lp-services-grid lp-reveal" style={{ maxWidth: 1060, margin: '0 auto' }}>
+        {active.map((job) => (
+          <div key={job.id} className="lp-service-card" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--lp-text)' }}>{job.title}</div>
+            {job.area && <div style={{ fontSize: '0.82rem', color: 'var(--muted)' }}>{job.area}</div>}
+
+            <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
+              {job.location && (
+                <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.8rem', color: 'var(--muted)' }}>
+                  <MapPin size={12} />{job.location}
+                </span>
+              )}
+              {job.modality && (
+                <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.8rem', color: 'var(--muted)' }}>
+                  <Clock size={12} />{MODALITY_LABELS[job.modality] || job.modality}
+                </span>
+              )}
+              {job.vacancies > 0 && (
+                <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.8rem', color: 'var(--muted)' }}>
+                  <Users size={12} />{job.vacancies} {job.vacancies === 1 ? 'cupo' : 'cupos'}
+                </span>
+              )}
+            </div>
+
+            {job.contractType && (
+              <span style={{ display: 'inline-block', fontSize: '0.75rem', fontWeight: 600, padding: '2px 10px', borderRadius: 100, background: 'rgba(25,227,217,0.1)', color: 'var(--teal)', alignSelf: 'flex-start' }}>
+                {CONTRACT_LABELS[job.contractType] || job.contractType}
+              </span>
+            )}
+
+            {job.description && (
+              <p style={{ fontSize: '0.84rem', color: 'var(--muted)', lineHeight: 1.55, margin: 0 }}>
+                {job.description.length > 110 ? job.description.slice(0, 110) + '…' : job.description}
+              </p>
+            )}
+
+            {job.salary && (
+              <div style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--teal)' }}>{job.salary}</div>
+            )}
+
+            <Link
+              to="/registro"
+              style={{ marginTop: 'auto', display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: '0.84rem', fontWeight: 600, color: 'var(--teal)', textDecoration: 'none', paddingTop: 8, borderTop: '1px solid var(--border)' }}
+            >
+              Postularme <ArrowRight size={14} />
+            </Link>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ textAlign: 'center', marginTop: 36 }}>
+        <Link to="/registro" className="lp-btn lp-btn-primary lp-btn-lg">
+          Registrarme y postularme
+        </Link>
+      </div>
+    </section>
+  )
+}
+
+/* ── Slides del carrusel: mockups estilizados de cada módulo ── */
+const SLIDES = [
+  {
+    label: 'Panel ejecutivo',
+    color: '#19E3D9',
+    content: (
+      <div className="lp-slide-inner">
+        <div className="lp-slide-header">
+          <span className="lp-slide-title">Panel ejecutivo</span>
+          <span className="lp-slide-badge" style={{ background: 'rgba(25,227,217,0.15)', color: '#19E3D9' }}>Admin</span>
+        </div>
+        <div className="lp-kpi-grid">
+          {[
+            { l: 'Aspirantes activos', v: '48', c: '#19E3D9' },
+            { l: 'Contratos firmados', v: '17', c: '#9B5DE5' },
+            { l: 'Docs aprobados', v: '134', c: '#2EE6A6' },
+            { l: 'Personal activo', v: '93', c: '#FFC857' },
+          ].map((k) => (
+            <div key={k.l} className="lp-kpi-card">
+              <div className="lp-kpi-label">{k.l}</div>
+              <div className="lp-kpi-val" style={{ color: k.c }}>{k.v}</div>
+              <div className="lp-kpi-bar" style={{ background: k.c }} />
+            </div>
+          ))}
+        </div>
+        <div className="lp-mini-chart">
+          {[40, 65, 50, 80, 60, 90, 75, 95, 70, 85].map((h, i) => (
+            <div key={i} className="lp-bar-col" style={{ height: h + '%', background: i === 9 ? '#19E3D9' : 'rgba(25,227,217,0.25)' }} />
+          ))}
+        </div>
+      </div>
+    ),
+  },
+  {
+    label: 'Pipeline de selección',
+    color: '#9B5DE5',
+    content: (
+      <div className="lp-slide-inner">
+        <div className="lp-slide-header">
+          <span className="lp-slide-title">Pipeline de selección</span>
+          <span className="lp-slide-badge" style={{ background: 'rgba(155,93,229,0.15)', color: '#9B5DE5' }}>Reclutamiento</span>
+        </div>
+        <div className="lp-pipeline-grid">
+          {[
+            { col: 'Aplicados', items: [{ n: 'Camila R.', t: 'Funcionaria', c: '#9B5DE5' }, { n: 'Diego M.', t: 'Contratista', c: '#19E3D9' }] },
+            { col: 'En revisión', items: [{ n: 'Laura P.', t: 'Funcionaria', c: '#9B5DE5' }, { n: 'Andrés T.', t: 'Contratista', c: '#19E3D9' }] },
+            { col: 'Apto', items: [{ n: 'Sofía V.', t: '✓ Apto', c: '#2EE6A6' }] },
+            { col: 'Contratado', items: [{ n: 'Jorge B.', t: 'Firmado', c: '#2EE6A6' }, { n: 'Natalia C.', t: 'Firmado', c: '#2EE6A6' }] },
+          ].map((col) => (
+            <div key={col.col} className="lp-pl-col">
+              <div className="lp-pl-col-head">{col.col}</div>
+              {col.items.map((it) => (
+                <div key={it.n} className="lp-pl-item">
+                  <div className="lp-pl-name">{it.n}</div>
+                  <span className="lp-pl-tag" style={{ color: it.c, background: it.c + '22' }}>{it.t}</span>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+  },
+  {
+    label: 'Revisión de documentos',
+    color: '#2EE6A6',
+    content: (
+      <div className="lp-slide-inner">
+        <div className="lp-slide-header">
+          <span className="lp-slide-title">Revisión de documentos</span>
+          <span className="lp-slide-badge" style={{ background: 'rgba(46,230,166,0.15)', color: '#2EE6A6' }}>Jurídica</span>
+        </div>
+        <div className="lp-doc-list">
+          {[
+            { doc: 'Cédula de ciudadanía', person: 'Camila Rodríguez', status: 'Aprobado', c: '#2EE6A6' },
+            { doc: 'Tarjeta profesional', person: 'Diego Martínez', status: 'En revisión', c: '#FFC857' },
+            { doc: 'Antecedentes judiciales', person: 'Laura Pérez', status: 'Aprobado', c: '#2EE6A6' },
+            { doc: 'Diploma universitario', person: 'Andrés Torres', status: 'Pendiente', c: '#FF5D73' },
+            { doc: 'Hoja de vida', person: 'Sofía Vargas', status: 'Aprobado', c: '#2EE6A6' },
+          ].map((d) => (
+            <div key={d.doc} className="lp-doc-row">
+              <div className="lp-doc-icon">📄</div>
+              <div className="lp-doc-info">
+                <div className="lp-doc-name">{d.doc}</div>
+                <div className="lp-doc-person">{d.person}</div>
+              </div>
+              <span className="lp-doc-status" style={{ color: d.c, background: d.c + '18' }}>{d.status}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+  },
+  {
+    label: 'Contratos digitales',
+    color: '#FFC857',
+    content: (
+      <div className="lp-slide-inner">
+        <div className="lp-slide-header">
+          <span className="lp-slide-title">Contratos digitales</span>
+          <span className="lp-slide-badge" style={{ background: 'rgba(255,200,87,0.15)', color: '#FFC857' }}>Jurídica · Admin</span>
+        </div>
+        <div className="lp-contract-card">
+          <div className="lp-contract-title">Contrato de Prestación de Servicios</div>
+          <div className="lp-contract-meta">Sofía Vargas · Vigencia: 01/08/2026 – 31/12/2026</div>
+          <div className="lp-contract-lines">
+            {[90, 80, 95, 60, 75].map((w, i) => (
+              <div key={i} className="lp-contract-line" style={{ width: w + '%' }} />
+            ))}
+          </div>
+          <div className="lp-signatures">
+            <div className="lp-sig lp-sig-done">
+              <div className="lp-sig-icon">✍️</div>
+              <div className="lp-sig-label">Contratado</div>
+              <div className="lp-sig-status" style={{ color: '#2EE6A6' }}>Firmado</div>
+            </div>
+            <div className="lp-sig-line" />
+            <div className="lp-sig lp-sig-done">
+              <div className="lp-sig-icon">🏢</div>
+              <div className="lp-sig-label">Admin</div>
+              <div className="lp-sig-status" style={{ color: '#2EE6A6' }}>Firmado</div>
+            </div>
+            <div className="lp-sig-line" />
+            <div className="lp-sig">
+              <div className="lp-sig-icon">⚖️</div>
+              <div className="lp-sig-label">Jurídica</div>
+              <div className="lp-sig-status" style={{ color: '#FFC857' }}>Pendiente</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    ),
+  },
+  {
+    label: 'Gestión de usuarios',
+    color: '#FF5D73',
+    content: (
+      <div className="lp-slide-inner">
+        <div className="lp-slide-header">
+          <span className="lp-slide-title">Gestión de usuarios</span>
+          <span className="lp-slide-badge" style={{ background: 'rgba(255,93,115,0.15)', color: '#FF5D73' }}>Admin</span>
+        </div>
+        <div className="lp-user-table">
+          <div className="lp-user-row lp-user-head">
+            <span>Nombre</span><span>Rol</span><span>Estado</span>
+          </div>
+          {[
+            { name: 'María González', role: 'Reclutadora', status: 'Activo', rc: '#2EE6A6', rk: '#9B5DE5' },
+            { name: 'Carlos López', role: 'Jurídica', status: 'Activo', rc: '#2EE6A6', rk: '#FFC857' },
+            { name: 'Ana Martínez', role: 'Finanzas', status: 'Activo', rc: '#2EE6A6', rk: '#19E3D9' },
+            { name: 'Pedro Sánchez', role: 'Personal', status: 'Inactivo', rc: '#FF5D73', rk: '#FF5D73' },
+          ].map((u) => (
+            <div key={u.name} className="lp-user-row">
+              <span className="lp-user-name">{u.name}</span>
+              <span className="lp-user-role" style={{ color: u.rk, background: u.rk + '18' }}>{u.role}</span>
+              <span className="lp-user-status" style={{ color: u.rc }}>{u.status}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+  },
+]
+
+function AppCarousel() {
+  const [active, setActive] = useState(0)
+  const timerRef = useRef(null)
+
+  const go = (idx) => {
+    setActive((idx + SLIDES.length) % SLIDES.length)
+  }
+
+  useEffect(() => {
+    timerRef.current = setInterval(() => setActive((a) => (a + 1) % SLIDES.length), 4500)
+    return () => clearInterval(timerRef.current)
+  }, [])
+
+  const resetTimer = (idx) => {
+    clearInterval(timerRef.current)
+    go(idx)
+    timerRef.current = setInterval(() => setActive((a) => (a + 1) % SLIDES.length), 4500)
+  }
+
+  return (
+    <div className="lp-carousel">
+      {/* Browser chrome */}
+      <div className="lp-carousel-chrome">
+        <div className="lp-carousel-topbar">
+          <div className="lp-carousel-dots-mac">
+            <span style={{ background: '#FF5D73' }} />
+            <span style={{ background: '#FFC857' }} />
+            <span style={{ background: '#2EE6A6' }} />
+          </div>
+          <div className="lp-carousel-urlbar">conexion360.app / {SLIDES[active].label.toLowerCase().replace(/ /g, '-')}</div>
+          <div style={{ width: 60 }} />
+        </div>
+
+        {/* Slides */}
+        <div className="lp-carousel-track">
+          {SLIDES.map((s, i) => (
+            <div
+              key={i}
+              className={`lp-carousel-slide${i === active ? ' active' : ''}`}
+              aria-hidden={i !== active}
+            >
+              {s.content}
+            </div>
+          ))}
+        </div>
+
+        {/* Glow accent per slide */}
+        <div
+          className="lp-carousel-glow"
+          style={{ background: SLIDES[active].color }}
+        />
+      </div>
+
+      {/* Controls */}
+      <div className="lp-carousel-controls">
+        <button className="lp-carousel-arrow" onClick={() => resetTimer(active - 1)} aria-label="Anterior">‹</button>
+        <div className="lp-carousel-indicators">
+          {SLIDES.map((s, i) => (
+            <button
+              key={i}
+              className={`lp-carousel-dot${i === active ? ' active' : ''}`}
+              onClick={() => resetTimer(i)}
+              aria-label={s.label}
+              title={s.label}
+              style={i === active ? { background: SLIDES[active].color, width: 24 } : {}}
+            />
+          ))}
+        </div>
+        <button className="lp-carousel-arrow" onClick={() => resetTimer(active + 1)} aria-label="Siguiente">›</button>
+      </div>
+
+      <div className="lp-carousel-label">{SLIDES[active].label}</div>
+    </div>
+  )
+}
+
 export default function LandingPage() {
   const navRef = useRef(null)
+  const { theme, toggleTheme } = useTheme()
 
   useEffect(() => {
     const onScroll = () => {
-      if (navRef.current) {
-        navRef.current.classList.toggle('scrolled', window.scrollY > 40)
-      }
+      if (navRef.current) navRef.current.classList.toggle('scrolled', window.scrollY > 40)
     }
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
@@ -58,11 +393,20 @@ export default function LandingPage() {
         <ul className="lp-nav-links">
           <li><a href="#servicios">Servicios</a></li>
           <li><a href="#como-funciona">Cómo funciona</a></li>
+          <li><a href="#empleos">Empleos</a></li>
           <li><a href="#contacto">Contacto</a></li>
         </ul>
         <div className="lp-nav-ctas">
           <Link className="lp-btn lp-btn-ghost" to="/login">Iniciar sesión</Link>
           <Link className="lp-btn lp-btn-primary" to="/registro">Registrarse</Link>
+          <button
+            className="lp-theme-btn"
+            onClick={toggleTheme}
+            aria-label={theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
+            title={theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
+          >
+            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+          </button>
         </div>
       </nav>
 
@@ -70,7 +414,14 @@ export default function LandingPage() {
       <section className="lp-hero">
         <div className="lp-orb lp-orb-teal" />
         <div className="lp-orb lp-orb-violet" />
+        <div className="lp-orb lp-orb-green" />
         <div className="lp-hero-bg-text" aria-hidden="true">360°</div>
+
+        {/* Logo prominente */}
+        <div className="lp-hero-logo-wrap lp-reveal">
+          <div className="lp-hero-logo-glow" />
+          <LogoMark size={96} />
+        </div>
 
         <div className="lp-eyebrow">
           <span className="lp-eyebrow-dot" />
@@ -92,61 +443,9 @@ export default function LandingPage() {
           <Link className="lp-btn lp-btn-outline lp-btn-lg" to="/registro">Registrarse</Link>
         </div>
 
-        <div className="lp-hero-trust">
-          <div className="lp-trust-item"><span style={{ color: 'var(--teal)' }}>✓</span> Sin contratos de permanencia</div>
-          <div className="lp-trust-sep" />
-          <div className="lp-trust-item"><span style={{ color: 'var(--teal)' }}>✓</span> Cumplimiento normativo colombiano</div>
-          <div className="lp-trust-sep" />
-          <div className="lp-trust-item"><span style={{ color: 'var(--teal)' }}>✓</span> Soporte en español</div>
-        </div>
-
-        {/* Mockup */}
+        {/* Carrusel de pantallas */}
         <div className="lp-hero-visual lp-reveal">
-          <div className="lp-demo-screen">
-            <div className="lp-demo-topbar">
-              <div className="lp-demo-dot" style={{ background: '#FF5D73' }} />
-              <div className="lp-demo-dot" style={{ background: '#FFC857' }} />
-              <div className="lp-demo-dot" style={{ background: '#2EE6A6' }} />
-              <div className="lp-demo-title-bar" />
-              <span style={{ fontSize: '10.5px', color: 'var(--dim)', fontWeight: 600 }}>Panel ejecutivo — Conexión 360</span>
-            </div>
-            <div className="lp-demo-grid">
-              {[
-                { label: 'Aspirantes activos', val: '48', sub: '↑ 12 este mes', color: 'var(--teal)', w: '72%', grad: 'linear-gradient(90deg,var(--teal),rgba(25,227,217,0.15))' },
-                { label: 'Contratos firmados', val: '17', sub: '↑ 5 este mes', color: 'var(--violet)', w: '55%', grad: 'linear-gradient(90deg,var(--violet),rgba(155,93,229,0.15))' },
-                { label: 'Docs aprobados', val: '134', sub: '↑ 28 este mes', color: 'var(--green)', w: '88%', grad: 'linear-gradient(90deg,var(--green),rgba(46,230,166,0.15))' },
-                { label: 'Personal en nómina', val: '93', sub: '3 nuevos', color: 'var(--amber)', w: '60%', grad: 'linear-gradient(90deg,var(--amber),rgba(255,200,87,0.15))' },
-              ].map((c) => (
-                <div key={c.label} className="lp-demo-card">
-                  <div className="lp-demo-card-label">{c.label}</div>
-                  <div className="lp-demo-card-val" style={{ color: c.color }}>{c.val}</div>
-                  <div className="lp-demo-card-sub">{c.sub}</div>
-                  <div className="lp-demo-bar" style={{ background: c.grad, width: c.w }} />
-                </div>
-              ))}
-            </div>
-            <div className="lp-demo-pipeline">
-              <div className="lp-pipe-col">
-                <div className="lp-pipe-col-head">Aplicados</div>
-                <div className="lp-pipe-item"><div className="lp-pipe-item-name">Camila R.</div><div className="lp-pipe-item-tag"><span className="lp-badge lp-badge-violet">Funcionaria</span></div></div>
-                <div className="lp-pipe-item"><div className="lp-pipe-item-name">Diego M.</div><div className="lp-pipe-item-tag"><span className="lp-badge lp-badge-teal">Contratista</span></div></div>
-              </div>
-              <div className="lp-pipe-col">
-                <div className="lp-pipe-col-head">En revisión</div>
-                <div className="lp-pipe-item"><div className="lp-pipe-item-name">Laura P.</div><div className="lp-pipe-item-tag"><span className="lp-badge lp-badge-violet">Funcionaria</span></div></div>
-                <div className="lp-pipe-item"><div className="lp-pipe-item-name">Andrés T.</div><div className="lp-pipe-item-tag"><span className="lp-badge lp-badge-teal">Contratista</span></div></div>
-              </div>
-              <div className="lp-pipe-col">
-                <div className="lp-pipe-col-head">Apto a contratación</div>
-                <div className="lp-pipe-item"><div className="lp-pipe-item-name">Sofía V.</div><div className="lp-pipe-item-tag"><span className="lp-badge lp-badge-green">✓ Apto</span></div></div>
-              </div>
-              <div className="lp-pipe-col">
-                <div className="lp-pipe-col-head">Contratados</div>
-                <div className="lp-pipe-item"><div className="lp-pipe-item-name">Jorge B.</div><div className="lp-pipe-item-tag"><span className="lp-badge lp-badge-green">Firmado</span></div></div>
-                <div className="lp-pipe-item"><div className="lp-pipe-item-name">Natalia C.</div><div className="lp-pipe-item-tag"><span className="lp-badge lp-badge-green">Firmado</span></div></div>
-              </div>
-            </div>
-          </div>
+          <AppCarousel />
         </div>
       </section>
 
@@ -163,10 +462,10 @@ export default function LandingPage() {
         </div>
         <div className="lp-steps lp-reveal">
           {[
-            { num: 'Atrae', icon: '🎯', bg: 'rgba(25,227,217,0.1)', title: 'Publica y atrae talento', desc: 'Difunde tus vacantes, recibe postulaciones y organiza candidatos por grupos y perfiles.' },
-            { num: 'Selecciona', icon: '📋', bg: 'rgba(155,93,229,0.1)', title: 'Revisa y decide', desc: 'Pipeline visual, revisión documental con flujo de aprobaciones y trazabilidad completa.' },
-            { num: 'Contrata', icon: '✍️', bg: 'rgba(46,230,166,0.1)', title: 'Firma contratos digitales', desc: 'Emisión y cadena jurídica de firmas. El contratado firma primero, luego Admin y Jurídica.' },
-            { num: 'Administra', icon: '🏢', bg: 'rgba(255,200,87,0.1)', title: 'Gestiona tu personal', desc: 'Nómina, certificados, permisos laborales, SST y cumplimiento normativo en un solo panel.' },
+            { num: 'Atrae', icon: '🎯', bg: 'rgba(25,227,217,0.12)', title: 'Publica y atrae talento', desc: 'Difunde tus vacantes, recibe postulaciones y organiza candidatos por grupos y perfiles.' },
+            { num: 'Selecciona', icon: '📋', bg: 'rgba(155,93,229,0.12)', title: 'Revisa y decide', desc: 'Pipeline visual, revisión documental con flujo de aprobaciones y trazabilidad completa.' },
+            { num: 'Contrata', icon: '✍️', bg: 'rgba(46,230,166,0.12)', title: 'Firma contratos digitales', desc: 'Emisión y cadena jurídica de firmas. El contratado firma primero, luego Admin y Jurídica.' },
+            { num: 'Administra', icon: '🏢', bg: 'rgba(255,200,87,0.12)', title: 'Gestiona tu personal', desc: 'Nómina, certificados, permisos laborales, SST y cumplimiento normativo en un solo panel.' },
           ].map((s, i, arr) => (
             <div key={s.num} className="lp-step">
               <div className="lp-step-num">{s.num}</div>
@@ -203,6 +502,9 @@ export default function LandingPage() {
           ))}
         </div>
       </section>
+
+      {/* EMPLEOS */}
+      <JobsSection />
 
       {/* WHY 360 */}
       <section className="lp-section lp-section-surface" id="por-que">

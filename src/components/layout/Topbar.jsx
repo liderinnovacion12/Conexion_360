@@ -20,7 +20,7 @@ export default function Topbar({ title, subtitle, onMenu }) {
   const [pwOpen, setPwOpen] = useState(false)
   const ref = useRef(null)
   const userRef = useRef(null)
-  const { notifications: notifs, markRead } = useNotifications()
+  const { notifications: notifs, markRead, markAllRead } = useNotifications()
   const canChangePassword = hasCapability(user?.id, 'canChangePassword')
 
   const openNotif = (n) => {
@@ -70,7 +70,7 @@ export default function Topbar({ title, subtitle, onMenu }) {
         </span>
 
         <div className="notif-wrap" ref={ref}>
-          <button className="icon-btn" onClick={() => setOpen((o) => !o)} aria-label="Notificaciones">
+          <button className="icon-btn" onClick={() => { const next = !open; setOpen(next); if (next) markAllRead() }} aria-label="Notificaciones">
             <Bell size={19} />
             {unread > 0 && <span className="notif-count">{unread}</span>}
           </button>

@@ -376,21 +376,8 @@ function TemplatesTab({ templates, groups, addTemplate, updateTemplate, removeTe
 // ─── Página principal ─────────────────────────────────────────────────────────
 
 export default function FormBuilder() {
-  const { templates, addTemplate, updateTemplate, removeTemplate } = useFormTemplates()
-  const { groups } = useCandidateGroups()
-  const [tab, setTab] = useState('candidates')
-
-  const TAB_STYLES = (active) => ({
-    padding: '7px 18px',
-    borderRadius: 8,
-    border: 'none',
-    cursor: 'pointer',
-    fontWeight: active ? 600 : 400,
-    fontSize: '0.875rem',
-    background: active ? 'var(--primary)' : 'transparent',
-    color: active ? '#fff' : 'var(--text-soft)',
-    transition: 'all 0.15s',
-  })
+  const { templates, addTemplate, updateTemplate } = useFormTemplates()
+  useCandidateGroups() // mantiene los datos de grupos disponibles para CandidatesTab
 
   return (
     <div className="page">
@@ -399,31 +386,11 @@ export default function FormBuilder() {
         subtitle="Configura qué documentos debe cargar cada aspirante y si son obligatorios u opcionales."
       />
 
-      {/* Tabs */}
-      <div className="row gap-2" style={{ marginBottom: 18, background: 'var(--surface)', borderRadius: 10, padding: 4, display: 'inline-flex' }}>
-        <button style={TAB_STYLES(tab === 'candidates')} onClick={() => setTab('candidates')}>
-          Por aspirante
-        </button>
-        <button style={TAB_STYLES(tab === 'templates')} onClick={() => setTab('templates')}>
-          Plantillas globales
-        </button>
-      </div>
-
-      {tab === 'candidates' ? (
-        <CandidatesTab
-          templates={templates}
-          addTemplate={addTemplate}
-          updateTemplate={updateTemplate}
-        />
-      ) : (
-        <TemplatesTab
-          templates={templates}
-          groups={groups}
-          addTemplate={addTemplate}
-          updateTemplate={updateTemplate}
-          removeTemplate={removeTemplate}
-        />
-      )}
+      <CandidatesTab
+        templates={templates}
+        addTemplate={addTemplate}
+        updateTemplate={updateTemplate}
+      />
     </div>
   )
 }
