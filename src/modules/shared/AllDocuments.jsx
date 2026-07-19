@@ -284,7 +284,7 @@ export default function AllDocuments() {
 
                 <div className="row gap-2" style={{ flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end', gap: 6 }}>
                   <Badge variant={seg.variant} dot>{seg.label}</Badge>
-                  <Badge variant={docStatusVariant(doc.status)} dot>
+                  <Badge variant={docStatusVariant[doc.status] || 'neutral'} dot>
                     {doc.status.charAt(0).toUpperCase() + doc.status.slice(1)}
                   </Badge>
                   {doc.uploadedAt && (
@@ -333,7 +333,7 @@ export default function AllDocuments() {
 
             {/* Estado actual */}
             <div className="row gap-2">
-              <Badge variant={docStatusVariant(active.status)} dot>
+              <Badge variant={docStatusVariant[active.status] || 'neutral'} dot>
                 {active.status.charAt(0).toUpperCase() + active.status.slice(1)}
               </Badge>
               {active.version > 1 && <span style={{ fontSize: '0.78rem', color: 'var(--text-dim)' }}>v{active.version}</span>}
