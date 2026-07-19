@@ -7,6 +7,8 @@ import Register from '../pages/Register.jsx'
 import ResetPassword from '../pages/ResetPassword.jsx'
 import LandingPage from '../pages/LandingPage.jsx'
 import { Forbidden, NotFound } from '../pages/ErrorPages.jsx'
+import ApplyJob from '../pages/ApplyJob.jsx'
+import JobsPage from '../pages/JobsPage.jsx'
 
 // Admin
 import AdminDashboard from '../modules/admin/AdminDashboard.jsx'
@@ -39,6 +41,8 @@ import CourseAssignment from '../modules/recruitment/CourseAssignment.jsx'
 import CandidateGroups from '../modules/recruitment/CandidateGroups.jsx'
 import FormBuilder from '../modules/recruitment/FormBuilder.jsx'
 import JobPostings from '../modules/recruitment/JobPostings.jsx'
+import JobApplications from '../modules/recruitment/JobApplications.jsx'
+import AllDocuments from '../modules/shared/AllDocuments.jsx'
 import RecruitmentApprovals from '../modules/recruitment/RecruitmentApprovals.jsx'
 // Legal
 import LegalDashboard from '../modules/legal/LegalDashboard.jsx'
@@ -78,12 +82,17 @@ export default function AppRoutes() {
       <Route path="/login" element={<Login />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/registro" element={<Register />} />
+      <Route path="/aplicar" element={<ApplyJob />} />
+      <Route path="/empleos" element={<JobsPage />} />
 
       {/* ---------- Administrador General ---------- */}
       <Route path="/admin" element={<Protected allow={[ROLES.ADMIN]} />}>
         <Route index element={<AdminDashboard />} />
         <Route path="usuarios" element={<UserManagement />} />
         <Route path="reclutamiento" element={<Pipeline />} />
+        <Route path="vacantes" element={<JobPostings />} />
+        <Route path="aplicaciones" element={<JobApplications />} />
+        <Route path="todos-documentos" element={<AllDocuments />} />
         <Route path="aprobaciones-aspirantes" element={<CandidateApprovals />} />
         <Route path="permisos" element={<LeaveRequestsAdmin />} />
         <Route path="nomina" element={<PersonnelRegistry />} />
@@ -117,6 +126,8 @@ export default function AppRoutes() {
       <Route path="/reclutamiento" element={<Protected allow={[ROLES.RECRUITMENT, ROLES.ADMIN]} />}>
         <Route index element={<RecruitmentDashboard />} />
         <Route path="vacantes" element={<JobPostings />} />
+        <Route path="aplicaciones" element={<JobApplications />} />
+        <Route path="todos-documentos" element={<AllDocuments />} />
         <Route path="pipeline" element={<Pipeline />} />
         <Route path="aspirantes" element={<CandidatesAdmin />} />
         <Route path="grupos" element={<CandidateGroups />} />
@@ -137,6 +148,7 @@ export default function AppRoutes() {
         <Route path="editor-documentos" element={<DocumentEditor />} />
         <Route path="aprobaciones" element={<LegalApprovals />} />
         <Route path="aprobaciones-aspirantes" element={<CandidateApprovals />} />
+        <Route path="todos-documentos" element={<AllDocuments />} />
         <Route path="documentos-por-firmar" element={<DocumentApprovals />} />
         <Route path="actividades" element={<Activities />} />
         <Route path="aspirantes" element={<CandidatesAdmin />} />

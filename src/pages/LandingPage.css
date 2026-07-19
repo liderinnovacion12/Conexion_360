@@ -1,6 +1,46 @@
 /* ── LANDING PAGE ── */
 .lp-wrap *, .lp-wrap *::before, .lp-wrap *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* Modo claro: responde al data-theme="light" que ThemeContext pone en <html> */
+[data-theme="light"] .lp-wrap {
+  --bg:      #F0F4FF;
+  --surface: #E4E9F8;
+  --glass:   rgba(0,0,0,0.04);
+  --border:  rgba(0,0,0,0.09);
+  --lp-text: #0C1322;
+  --muted:   rgba(12,19,34,0.62);
+  --dim:     rgba(12,19,34,0.38);
+}
+[data-theme="light"] .lp-nav { background: rgba(240,244,255,0.78); border-bottom-color: rgba(0,0,0,0.09); }
+[data-theme="light"] .lp-nav.scrolled { background: rgba(240,244,255,0.97); }
+[data-theme="light"] .lp-hero { background: radial-gradient(ellipse 80% 60% at 50% -10%,rgba(25,227,217,0.09) 0%,transparent 70%), radial-gradient(ellipse 60% 50% at 80% 80%,rgba(155,93,229,0.07) 0%,transparent 60%); }
+[data-theme="light"] .lp-carousel-chrome { background: #ffffff; }
+[data-theme="light"] .lp-carousel-topbar { background: #F0F4FF; }
+[data-theme="light"] .lp-slide-inner,
+[data-theme="light"] .lp-kpi-card,
+[data-theme="light"] .lp-pl-col,
+[data-theme="light"] .lp-pl-item,
+[data-theme="light"] .lp-doc-row,
+[data-theme="light"] .lp-contract-card,
+[data-theme="light"] .lp-user-row { background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.07); }
+[data-theme="light"] .lp-section-surface { background: linear-gradient(180deg,#E4E9F8 0%,#DDE3F4 100%); }
+[data-theme="light"] .lp-step { background: rgba(0,0,0,0.02); }
+[data-theme="light"] .lp-step:hover { background: rgba(0,0,0,0.05); }
+[data-theme="light"] .lp-step-arr { background: #F0F4FF; }
+[data-theme="light"] .lp-service-card,
+[data-theme="light"] .lp-why-card { background: rgba(0,0,0,0.03); }
+[data-theme="light"] .lp-service-card:hover,
+[data-theme="light"] .lp-why-card:hover { background: rgba(0,0,0,0.06); }
+[data-theme="light"] .lp-footer { background: #E4E9F8; }
+[data-theme="light"] .lp-btn-ghost { background: rgba(0,0,0,0.05); color: rgba(12,19,34,0.7); }
+[data-theme="light"] .lp-btn-ghost:hover { background: rgba(0,0,0,0.1); color: #0C1322; }
+[data-theme="light"] .lp-btn-outline { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.14); color: rgba(12,19,34,0.65); }
+[data-theme="light"] .lp-btn-outline:hover { background: rgba(0,0,0,0.08); color: #0C1322; }
+[data-theme="light"] .lp-theme-btn { background: rgba(0,0,0,0.05); border-color: rgba(0,0,0,0.1); color: rgba(12,19,34,0.6); }
+[data-theme="light"] .lp-hero-bg-text { color: rgba(0,0,0,0.025); }
+[data-theme="light"] .lp-carousel-urlbar { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.08); }
+[data-theme="light"] .lp-user-head { background: transparent; border-color: transparent; }
+
 .lp-wrap {
   --teal:    #19E3D9;
   --violet:  #9B5DE5;

@@ -105,7 +105,7 @@ function JobsSection() {
             )}
 
             <Link
-              to="/registro"
+              to={`/aplicar?jobId=${job.id}&title=${encodeURIComponent(job.title)}`}
               style={{ marginTop: 'auto', display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: '0.84rem', fontWeight: 600, color: 'var(--teal)', textDecoration: 'none', paddingTop: 8, borderTop: '1px solid var(--border)' }}
             >
               Postularme <ArrowRight size={14} />
@@ -393,7 +393,7 @@ export default function LandingPage() {
         <ul className="lp-nav-links">
           <li><a href="#servicios">Servicios</a></li>
           <li><a href="#como-funciona">Cómo funciona</a></li>
-          <li><a href="#empleos">Empleos</a></li>
+          <li><Link to="/empleos">Empleos</Link></li>
           <li><a href="#contacto">Contacto</a></li>
         </ul>
         <div className="lp-nav-ctas">

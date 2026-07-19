@@ -24,6 +24,7 @@ import {
   ListChecks,
   Activity,
   Store,
+  Inbox,
 } from 'lucide-react'
 import { ROLES } from '../utils/roles.js'
 
@@ -37,6 +38,9 @@ export const NAV_CONFIG = {
     ]},
     { section: 'Operación', items: [
       { to: '/admin/reclutamiento', label: 'Reclutamiento', icon: KanbanSquare },
+      { to: '/admin/vacantes', label: 'Publicar vacantes', icon: Briefcase },
+      { to: '/admin/aplicaciones', label: 'Aplicaciones recibidas', icon: Inbox },
+      { to: '/admin/todos-documentos', label: 'Documentos', icon: FolderOpen },
       { to: '/admin/aprobaciones-aspirantes', label: 'Aprobación final de aspirantes', icon: BadgeCheck },
       { to: '/admin/permisos', label: 'Solicitudes de permisos', icon: CheckSquare },
       { to: '/admin/nomina', label: 'Nómina y personal', icon: Wallet },
@@ -76,6 +80,8 @@ export const NAV_CONFIG = {
       { to: '/reclutamiento', label: 'Tablero', icon: LayoutDashboard, end: true },
       { to: '/reclutamiento/grupos', label: 'Grupos de aspirantes', icon: UsersRound },
       { to: '/reclutamiento/vacantes', label: 'Publicar vacantes', icon: Briefcase },
+      { to: '/reclutamiento/aplicaciones', label: 'Aplicaciones recibidas', icon: Inbox },
+      { to: '/reclutamiento/todos-documentos', label: 'Documentos', icon: FolderOpen },
       { to: '/reclutamiento/pipeline', label: 'Pipeline', icon: KanbanSquare },
       { to: '/reclutamiento/aspirantes', label: 'Aspirantes (contratistas y funcionarios)', icon: UserPlus },
       { to: '/reclutamiento/formularios', label: 'Constructor de formularios', icon: ListChecks },
@@ -96,6 +102,7 @@ export const NAV_CONFIG = {
       { to: '/juridica/editor-documentos', label: 'Editor de documentos', icon: FileSignature },
       { to: '/juridica/aprobaciones', label: 'Aprobaciones de contratos', icon: CheckSquare },
       { to: '/juridica/aprobaciones-aspirantes', label: 'Aprobación de aspirantes', icon: BadgeCheck },
+      { to: '/juridica/todos-documentos', label: 'Documentos', icon: FolderOpen },
       { to: '/juridica/documentos-por-firmar', label: 'Documentos por firmar', icon: CheckSquare },
       { to: '/juridica/actividades', label: 'Actividades', icon: Activity },
     ]},

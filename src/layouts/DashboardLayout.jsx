@@ -3,6 +3,7 @@ import { Outlet, useLocation, Navigate } from 'react-router-dom'
 import Sidebar from '../components/layout/Sidebar.jsx'
 import Topbar from '../components/layout/Topbar.jsx'
 import NotificationToast from '../components/layout/NotificationToast.jsx'
+import ChatWidget from '../components/feature/ChatWidget.jsx'
 import { NAV_CONFIG } from '../routes/navConfig.jsx'
 import { matchNavItem } from '../routes/navMatch.js'
 import { useAuth } from '../context/AuthContext.jsx'
@@ -27,6 +28,7 @@ export default function DashboardLayout() {
   return (
     <div className="shell">
       <NotificationToast />
+      <ChatWidget />
       <Sidebar
         collapsed={collapsed}
         onToggle={() => setCollapsed((c) => !c)}
