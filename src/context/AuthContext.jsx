@@ -50,17 +50,9 @@ async function fetchProfile(userId) {
     throw new Error('Tu cuenta fue eliminada. Regístrate de nuevo para continuar.')
   }
 
-  // Aspirante recién auto-registrado: todavía no tiene fila en `candidates`
-  // ni profiles.candidate_id. La función RPC `register_candidate_profile`
-  // la crea y la enlaza. Es idempotente.
-  if (data.role === 'candidate' && !data.candidate_id) {
-    const { error: rpcError } = await supabase.rpc('register_candidate_profile')
-    if (!rpcError) {
-      const { data: refreshed } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle()
-      if (refreshed) return profileToSessionUser(refreshed)
-    }
-  }
-
+  // Nota: los aspirantes recién registrados quedan con role='candidate' y
+  // sin candidate_id hasta que el admin los promueva manualmente desde
+  // Gestión de usuarios → "Convertir en candidato".
   return profileToSessionUser(data)
 }
 

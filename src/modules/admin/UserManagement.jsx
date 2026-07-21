@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { UserPlus, Pencil, Shield, Trash2, KeyRound, ArrowUpRight } from 'lucide-react'
+import { UserPlus, Pencil, Shield, Trash2, KeyRound, ArrowUpRight, UserCheck } from 'lucide-react'
 import PageHeader from '../../components/common/PageHeader.jsx'
 import { Card } from '../../components/ui/Card.jsx'
 import DataTable from '../../components/ui/DataTable.jsx'
@@ -22,7 +22,7 @@ const emptyPromotion = { position: '', contract: CONTRACT_TYPES[0], salary: '', 
 export default function UserManagement() {
   const { users, addUser, updateUser, removeUser, adminUpdateCredentials } = useUsers()
   const { addPersonnel } = usePersonnel()
-  const { candidates } = useCandidates()
+  const { candidates, addCandidate } = useCandidates()
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState(emptyForm)
@@ -39,6 +39,34 @@ export default function UserManagement() {
     if (deleteStep === 1) { setDeleteStep(2); return }
     setDeleting(true)
     try { await removeUser(toDelete.id) } finally { setDeleting(false); setToDelete(null) }
+  }
+
+  // ── Convertir aspirante en candidato (crea fila en candidates y enlaza) ──
+  const [converting, setConverting] = useState(null)   // usuario a convertir
+  const [convertSaving, setConvertSaving] = useState(false)
+  const [convertError, setConvertError] = useState(null)
+  const [convertDone, setConvertDone] = useState(null)
+
+  const confirmConvert = async () => {
+    if (!converting) return
+    setConvertSaving(true)
+    setConvertError(null)
+    try {
+      const candidate = await addCandidate({
+        name:   converting.name,
+        email:  converting.email,
+        stage:  'registro',
+        status: 'pendiente',
+        track:  'funcionario',
+      })
+      await updateUser(converting.id, { candidateId: candidate.id })
+      setConvertDone(converting.name)
+      setConverting(null)
+    } catch (err) {
+      setConvertError(err.message || 'No se pudo convertir el aspirante.')
+    } finally {
+      setConvertSaving(false)
+    }
   }
 
   const [promoting, setPromoting] = useState(null)   // usuario aspirante a promover
@@ -202,7 +230,14 @@ export default function UserManagement() {
     {
       key: 'role',
       header: 'Rol',
-      render: (u) => <Badge variant="violet" dot>{ROLE_META[u.role]?.label ?? u.role}</Badge>,
+      render: (u) => (
+        <div className="col gap-1">
+          <Badge variant="violet" dot>{ROLE_META[u.role]?.label ?? u.role}</Badge>
+          {u.role === ROLES.CANDIDATE && !u.candidateId && (
+            <Badge variant="warning" dot>Aspirante — pendiente de activar</Badge>
+          )}
+        </div>
+      ),
     },
     { key: 'area', header: 'Área' },
     {
@@ -213,7 +248,12 @@ export default function UserManagement() {
         <div className="row gap-1">
           <Button size="sm" variant="ghost" icon={Pencil} onClick={() => openEdit(u)}>Editar</Button>
           <Button size="sm" variant="ghost" icon={KeyRound} onClick={() => askReset(u)} title="Restablecer contraseña">Clave</Button>
-          {u.role === ROLES.CANDIDATE && (
+          {u.role === ROLES.CANDIDATE && !u.candidateId && (
+            <Button size="sm" variant="ghost" icon={UserCheck} onClick={() => { setConverting(u); setConvertError(null) }} title="Convertir en candidato">
+              Candidato
+            </Button>
+          )}
+          {u.role === ROLES.CANDIDATE && u.candidateId && (
             <Button size="sm" variant="ghost" icon={ArrowUpRight} onClick={() => openPromote(u)} title="Promover a Personal">
               Promover
             </Button>
@@ -296,6 +336,48 @@ export default function UserManagement() {
               <Input value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value })} placeholder="Ej: Operaciones" />
             </Field>
           </div>
+        )}
+      </Modal>
+
+      {/* ---- Modal: convertir aspirante en candidato ---- */}
+      <Modal
+        open={!!converting}
+        onClose={() => setConverting(null)}
+        title="Activar como candidato"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setConverting(null)}>Cancelar</Button>
+            <Button variant="primary" icon={UserCheck} onClick={confirmConvert} disabled={convertSaving}>
+              {convertSaving ? 'Activando…' : 'Confirmar'}
+            </Button>
+          </>
+        }
+      >
+        {converting && (
+          <div className="col gap-3">
+            <AlertBanner variant="info" title={`Activar a ${converting.name} como candidato`}>
+              Esta persona se registró con un código de acceso. Al confirmar, se creará su ficha en el pipeline de
+              reclutamiento y podrá avanzar por las etapas del proceso de selección.
+            </AlertBanner>
+            {convertError && <AlertBanner variant="danger">{convertError}</AlertBanner>}
+            <div className="glass-soft" style={{ padding: 14 }}>
+              <div className="stat-row"><span className="muted">Nombre</span><b>{converting.name}</b></div>
+              <div className="stat-row"><span className="muted">Correo</span><b>{converting.email}</b></div>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      <Modal
+        open={!!convertDone}
+        onClose={() => setConvertDone(null)}
+        title="Candidato activado"
+        footer={<Button variant="primary" onClick={() => setConvertDone(null)}>Entendido</Button>}
+      >
+        {convertDone && (
+          <AlertBanner variant="success" title="Listo">
+            <b>{convertDone}</b> ahora aparece en el pipeline de reclutamiento como candidato activo.
+          </AlertBanner>
         )}
       </Modal>
 
