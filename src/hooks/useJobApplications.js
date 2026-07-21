@@ -115,7 +115,8 @@ export async function validateRegistrationCode(code) {
 export async function markCodeUsed(code) {
   const normalized = code.trim().toUpperCase()
   if (USE_SUPABASE) {
-    await supabase.from('job_applications').update({ code_used: true }).eq('registration_code', normalized)
+    // RPC con SECURITY DEFINER — permite que el candidato recién registrado invalide su código
+    await supabase.rpc('use_registration_code', { p_code: normalized })
   } else {
     const list = loadMock()
     saveMock(list.map((a) => a.registrationCode === normalized ? { ...a, codeUsed: true } : a))

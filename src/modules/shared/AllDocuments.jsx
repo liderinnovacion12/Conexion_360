@@ -44,6 +44,7 @@ const REGISTERED_STAGES = [
 
 export default function AllDocuments() {
   const { user } = useAuth()
+  const canReview = user?.role === 'admin' || user?.role === 'recruitment'
   const { documents, loading: loadDocs, reviewDocument } = useDocuments()
   const { candidates, loading: loadCands } = useCandidates()
   const { personnel, loading: loadPersonnel } = usePersonnel()
@@ -295,7 +296,7 @@ export default function AllDocuments() {
                 </div>
 
                 <Button size="sm" variant="ghost" icon={Eye} onClick={(e) => { e.stopPropagation(); openDoc(doc) }}>
-                  Revisar
+                  {canReview ? 'Revisar' : 'Ver'}
                 </Button>
               </div>
             )
@@ -399,12 +400,10 @@ export default function AllDocuments() {
               </div>
             )}
 
-            {/* Acciones */}
-            {active.status !== 'aprobado' && (
+            {/* Acciones — solo admin y reclutamiento pueden aprobar/rechazar */}
+            {canReview && active.status !== 'aprobado' && (
               <div className="row gap-2" style={{ paddingTop: 8, borderTop: '1px solid var(--glass-border)', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                <Button size="sm" variant="ghost" icon={History} onClick={async () => {
-                  // lazy-load historial solo si se pide
-                }}>
+                <Button size="sm" variant="ghost" icon={History} onClick={async () => {}}>
                   Historial
                 </Button>
                 <Button size="sm" variant="ghost" icon={Undo2} disabled={acting || active.status === 'devuelto'} onClick={() => act('devuelto')}>
@@ -420,6 +419,9 @@ export default function AllDocuments() {
             )}
             {active.status === 'aprobado' && (
               <AlertBanner variant="success">Este documento ya fue aprobado. No requiere acción adicional.</AlertBanner>
+            )}
+            {!canReview && active.status !== 'aprobado' && (
+              <AlertBanner variant="info">Solo el administrador o el reclutador pueden aprobar o rechazar documentos.</AlertBanner>
             )}
           </div>
         )}
