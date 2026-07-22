@@ -6,17 +6,22 @@ import DataTable from '../../components/ui/DataTable.jsx'
 import Modal from '../../components/ui/Modal.jsx'
 import Button from '../../components/ui/Button.jsx'
 import Badge from '../../components/ui/Badge.jsx'
+import { AlertBanner } from '../../components/ui/Feedback.jsx'
 import { Field, Input, Select } from '../../components/ui/Form.jsx'
 import { CONTRACT_TYPES, PAYROLL_STATES } from '../../data/mockPersonnel.js'
 import { formatCOP, formatDate, toNameCase } from '../../utils/format.js'
 import { generateLaborCertificate, exportToCSV } from '../../utils/pdf.js'
 import { usePersonnel } from '../../hooks/usePersonnel.js'
+import { useAuth } from '../../context/AuthContext.jsx'
 
 const emptyForm = { doc: '', name: '', position: '', contract: 'Indefinido', salary: '', state: 'Activo', start: '', end: '', area: '' }
 const stateVariant = { Activo: 'success', Inactivo: 'neutral', Suspendido: 'warning', Retirado: 'danger' }
 
 export default function PersonnelRegistry() {
   const { personnel: rows, addPersonnel, updatePersonnel } = usePersonnel()
+  const { user } = useAuth()
+  const isAdmin = user?.role === 'admin'
+
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState(emptyForm)
@@ -24,6 +29,23 @@ export default function PersonnelRegistry() {
   const [filterArea, setFilterArea] = useState('')
   const [filterContract, setFilterContract] = useState('')
   const [showRetired, setShowRetired] = useState(false)
+
+  // Retirar persona
+  const [retiring, setRetiring] = useState(null)
+  const [retireDate, setRetireDate] = useState(() => new Date().toISOString().slice(0, 10))
+  const [retireLoading, setRetireLoading] = useState(false)
+
+  const confirmRetire = async () => {
+    if (!retiring) return
+    setRetireLoading(true)
+    try {
+      await updatePersonnel(retiring.id, { state: 'Retirado', end: retireDate || null })
+      setShowRetired(true)
+    } finally {
+      setRetireLoading(false)
+      setRetiring(null)
+    }
+  }
 
   const areas = useMemo(() => [...new Set(rows.map((p) => p.area))], [rows])
   const active = rows.filter(
@@ -66,8 +88,16 @@ export default function PersonnelRegistry() {
       key: 'actions', header: 'Acciones', sortable: false,
       render: (p) => (
         <div className="row gap-1">
-          <Button size="sm" variant="ghost" icon={Pencil} onClick={() => openEdit(p)} />
+          <Button size="sm" variant="ghost" icon={Pencil} onClick={() => openEdit(p)} title="Editar" />
           <Button size="sm" variant="ghost" icon={FileSignature} onClick={() => generateLaborCertificate(p)} title="Certificado laboral" />
+          {isAdmin && p.state !== 'Retirado' && (
+            <Button
+              size="sm" variant="ghost" icon={UserMinus}
+              style={{ color: '#FF5D73' }}
+              title="Retirar persona"
+              onClick={() => { setRetiring(p); setRetireDate(new Date().toISOString().slice(0, 10)) }}
+            />
+          )}
         </div>
       ),
     },
@@ -146,6 +176,38 @@ export default function PersonnelRegistry() {
           </Card>
         )}
       </div>
+
+      {/* Modal: confirmar retiro */}
+      <Modal
+        open={!!retiring}
+        onClose={() => setRetiring(null)}
+        title="Retirar persona"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setRetiring(null)}>Cancelar</Button>
+            <Button variant="danger" icon={UserMinus} onClick={confirmRetire} disabled={retireLoading}>
+              {retireLoading ? 'Procesando…' : 'Confirmar retiro'}
+            </Button>
+          </>
+        }
+      >
+        {retiring && (
+          <div className="col gap-3">
+            <AlertBanner variant="warning" title="¿Retirar a esta persona?">
+              El registro de <b>{retiring.name}</b> pasará a estado <b>Retirado</b> y aparecerá en el apartado de Personal Retirado.
+              Esta acción puede revertirse editando el registro.
+            </AlertBanner>
+            <Field label="Fecha de retiro">
+              <input
+                type="date"
+                value={retireDate}
+                onChange={(e) => setRetireDate(e.target.value)}
+                style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid var(--glass-border)', background: 'var(--surface)', color: 'var(--text)', fontSize: '0.9rem' }}
+              />
+            </Field>
+          </div>
+        )}
+      </Modal>
 
       <Modal
         open={open}
