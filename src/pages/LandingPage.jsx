@@ -11,8 +11,7 @@ function NavLogo() {
     <Link className="lp-nav-logo" to="/">
       <LogoMark size={34} />
       <div className="lp-logo-wordmark">
-        <div className="lp-logo-name">CONEXIÓN <span className="lp-grad">360</span></div>
-        <div className="lp-logo-sub">Todo Ágil CTA</div>
+        <div className="lp-logo-name">CONEXIÓN TODO ÁGIL <span className="lp-grad">360</span></div>
       </div>
     </Link>
   )
