@@ -890,6 +890,35 @@ export async function notifyUser(profileId, { title, body, link, color = '#19C7A
   check(error)
 }
 
+// Crear una cuenta de aspirante directamente desde Reclutamiento.
+// Llama al endpoint serverless (api/admin-create-user.js) que usa la
+// service role key solo del lado del servidor.
+export async function adminCreateUser({ name, email, password }) {
+  must()
+  const { data: sessionData, error: sessionErr } = await supabase.auth.getSession()
+  check(sessionErr)
+  const token = sessionData?.session?.access_token
+  if (!token) throw new Error('No hay una sesión activa.')
+
+  const res = await fetch('/api/admin-create-user', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ name, email, password }),
+  })
+
+  const body = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    if (res.status === 404) {
+      throw new Error('El endpoint /api/admin-create-user no existe en este entorno. Las funciones serverless solo corren en Vercel (no en "npm run dev" local).')
+    }
+    throw new Error(body.error || `No se pudo crear el usuario (HTTP ${res.status}).`)
+  }
+  return body
+}
+
 // Cambiar el correo o la contraseña de OTRA cuenta requiere la API de
 // administración de Supabase Auth (service role key), que nunca debe
 // vivir en el navegador. Por eso esto llama a un endpoint propio

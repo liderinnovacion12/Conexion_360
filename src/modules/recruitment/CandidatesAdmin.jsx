@@ -21,6 +21,7 @@ import { useCandidateGroups } from '../../hooks/useCandidateGroups.js'
 import { useTracks } from '../../hooks/useTracks.js'
 import { useCandidates } from '../../hooks/useCandidates.js'
 import { useAuth } from '../../context/AuthContext.jsx'
+import { USE_SUPABASE, adminCreateUser } from '../../services/api.js'
 import { usePermissions } from '../../context/PermissionsContext.jsx'
 import { useMySignatures } from '../../hooks/useMySignatures.js'
 import { useApprovals } from '../../hooks/useApprovals.js'
@@ -49,6 +50,40 @@ export default function CandidatesAdmin() {
   const [newTrackName, setNewTrackName] = useState('')
   const { groupsForCandidate } = useCandidateGroups()
   const { tracks, addTrack, trackLabel } = useTracks()
+
+  const [profileOpen, setProfileOpen] = useState(false)
+  const [profileForm, setProfileForm] = useState({ name: '', email: '', password: '' })
+  const [profileCreated, setProfileCreated] = useState(null)
+  const [profileError, setProfileError] = useState('')
+  const [profileLoading, setProfileLoading] = useState(false)
+
+  const createProfile = async () => {
+    if (!profileForm.name || !profileForm.email || !profileForm.password) return
+    if (profileForm.password.length < 8) {
+      setProfileError('La contraseña debe tener al menos 8 caracteres.')
+      return
+    }
+    setProfileError('')
+    setProfileLoading(true)
+    try {
+      if (USE_SUPABASE) {
+        await adminCreateUser({ name: toNameCase(profileForm.name), email: profileForm.email, password: profileForm.password })
+      }
+      setProfileCreated({ email: profileForm.email, password: profileForm.password })
+      setProfileForm({ name: '', email: '', password: '' })
+    } catch (err) {
+      setProfileError(err?.message || 'No se pudo crear la cuenta.')
+    } finally {
+      setProfileLoading(false)
+    }
+  }
+
+  const closeProfile = () => {
+    setProfileOpen(false)
+    setProfileCreated(null)
+    setProfileError('')
+    setProfileForm({ name: '', email: '', password: '' })
+  }
 
   const [approving, setApproving] = useState(null) // candidato activo en el modal
   const [signature, setSignature] = useState(null)
@@ -185,7 +220,14 @@ export default function CandidatesAdmin() {
       <PageHeader
         title="Aspirantes"
         subtitle="Solo el área de reclutamiento puede crear cuentas de aspirantes."
-        actions={<Button variant="primary" icon={UserPlus} onClick={() => { setCreated(null); setOpen(true) }}>Crear aspirante</Button>}
+        actions={
+          <div className="row gap-2">
+            <Button variant="ghost" icon={UserPlus} onClick={() => { setProfileCreated(null); setProfileError(''); setProfileOpen(true) }}>
+              Agregar perfil de aspirante
+            </Button>
+            <Button variant="primary" icon={UserPlus} onClick={() => { setCreated(null); setOpen(true) }}>Crear aspirante</Button>
+          </div>
+        }
       />
 
       <div style={{ marginBottom: 16 }}>
@@ -337,6 +379,80 @@ export default function CandidatesAdmin() {
           )
         }
       />
+
+      {/* Modal: Agregar perfil de aspirante (cuenta de acceso real) */}
+      <Modal
+        open={profileOpen}
+        onClose={closeProfile}
+        title="Agregar perfil de aspirante"
+        footer={
+          profileCreated ? (
+            <Button variant="primary" onClick={closeProfile}>Entendido</Button>
+          ) : (
+            <>
+              <Button variant="ghost" onClick={closeProfile}>Cancelar</Button>
+              <Button
+                variant="primary"
+                icon={UserPlus}
+                onClick={createProfile}
+                disabled={profileLoading || !profileForm.name || !profileForm.email || !profileForm.password}
+              >
+                {profileLoading ? 'Creando…' : 'Crear cuenta'}
+              </Button>
+            </>
+          )
+        }
+      >
+        {profileCreated ? (
+          <div className="col gap-3">
+            <AlertBanner variant="success" title="Cuenta creada">
+              El aspirante ya puede ingresar con estas credenciales.
+            </AlertBanner>
+            <div className="glass-soft" style={{ padding: 14 }}>
+              <div className="stat-row"><span className="muted">Correo</span><b>{profileCreated.email}</b></div>
+              <div className="stat-row"><span className="muted">Contraseña</span><b>{profileCreated.password}</b></div>
+            </div>
+            <p className="card-sub">Comparte estas credenciales con el aspirante. Al ingresar, podrá completar su perfil y documentos.</p>
+          </div>
+        ) : (
+          <div className="col gap-3">
+            <AlertBanner variant="info">
+              Crea un acceso directo para el aspirante. Recibirá las credenciales que tú definas y podrá ingresar de inmediato como aspirante.
+            </AlertBanner>
+            {!USE_SUPABASE && (
+              <AlertBanner variant="warning">
+                Modo demo: la cuenta no se creará en Supabase. Este flujo funciona completamente solo cuando la app está desplegada en Vercel.
+              </AlertBanner>
+            )}
+            <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+              <Field label="Nombres y apellidos" required>
+                <Input
+                  value={profileForm.name}
+                  onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
+                  placeholder="Ej: María Pérez"
+                />
+              </Field>
+              <Field label="Correo electrónico" required>
+                <Input
+                  type="email"
+                  value={profileForm.email}
+                  onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
+                  placeholder="aspirante@correo.com"
+                />
+              </Field>
+              <Field label="Contraseña" required style={{ gridColumn: '1 / -1' }}>
+                <Input
+                  type="password"
+                  value={profileForm.password}
+                  onChange={(e) => setProfileForm({ ...profileForm, password: e.target.value })}
+                  placeholder="Mínimo 8 caracteres"
+                />
+              </Field>
+            </div>
+            {profileError && <AlertBanner variant="danger">{profileError}</AlertBanner>}
+          </div>
+        )}
+      </Modal>
     </div>
   )
 }
