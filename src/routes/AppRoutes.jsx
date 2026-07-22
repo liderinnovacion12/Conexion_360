@@ -43,6 +43,7 @@ import FormBuilder from '../modules/recruitment/FormBuilder.jsx'
 import JobPostings from '../modules/recruitment/JobPostings.jsx'
 import JobApplications from '../modules/recruitment/JobApplications.jsx'
 import AllDocuments from '../modules/shared/AllDocuments.jsx'
+import RetiredPersonnel from '../modules/shared/RetiredPersonnel.jsx'
 import RecruitmentApprovals from '../modules/recruitment/RecruitmentApprovals.jsx'
 // Legal
 import LegalDashboard from '../modules/legal/LegalDashboard.jsx'
@@ -96,6 +97,7 @@ export default function AppRoutes() {
         <Route path="aprobaciones-aspirantes" element={<CandidateApprovals />} />
         <Route path="permisos" element={<LeaveRequestsAdmin />} />
         <Route path="nomina" element={<PersonnelRegistry />} />
+        <Route path="personal-retirado" element={<RetiredPersonnel />} />
         <Route path="documentos" element={<DocumentReview />} />
         <Route path="editor-documentos" element={<DocumentEditor />} />
         <Route path="documentos-por-firmar" element={<DocumentApprovals />} />
@@ -134,6 +136,7 @@ export default function AppRoutes() {
         <Route path="formularios" element={<FormBuilder />} />
         <Route path="documentos" element={<DocumentReview />} />
         <Route path="editor-documentos" element={<DocumentEditor />} />
+        <Route path="personal-retirado" element={<RetiredPersonnel />} />
         <Route path="aprobaciones" element={<RecruitmentApprovals />} />
         <Route path="documentos-por-firmar" element={<DocumentApprovals />} />
         <Route path="actividades" element={<Activities />} />

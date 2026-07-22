@@ -25,6 +25,7 @@ import {
   Activity,
   Store,
   Inbox,
+  UserMinus,
 } from 'lucide-react'
 import { ROLES } from '../utils/roles.js'
 
@@ -44,6 +45,7 @@ export const NAV_CONFIG = {
       { to: '/admin/aprobaciones-aspirantes', label: 'Aprobación final de aspirantes', icon: BadgeCheck },
       { to: '/admin/permisos', label: 'Solicitudes de permisos', icon: CheckSquare },
       { to: '/admin/nomina', label: 'Nómina y personal', icon: Wallet },
+      { to: '/admin/personal-retirado', label: 'Personal retirado', icon: UserMinus },
       { to: '/admin/documentos', label: 'Documentos', icon: FolderOpen },
       { to: '/admin/editor-documentos', label: 'Editor de documentos', icon: FileSignature },
       { to: '/admin/documentos-por-firmar', label: 'Documentos por firmar', icon: CheckSquare },
@@ -87,6 +89,7 @@ export const NAV_CONFIG = {
       { to: '/reclutamiento/formularios', label: 'Constructor de formularios', icon: ListChecks },
       { to: '/reclutamiento/documentos', label: 'Revisión documental', icon: ClipboardCheck },
       { to: '/reclutamiento/editor-documentos', label: 'Editor de documentos', icon: FileSignature },
+      { to: '/reclutamiento/personal-retirado', label: 'Personal retirado', icon: UserMinus },
       { to: '/reclutamiento/aprobaciones', label: 'Contratos aprobados', icon: CheckSquare },
       { to: '/reclutamiento/documentos-por-firmar', label: 'Documentos por firmar', icon: CheckSquare },
       { to: '/reclutamiento/actividades', label: 'Actividades', icon: Activity },
