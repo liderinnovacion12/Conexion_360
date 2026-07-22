@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { UserPlus, Pencil, FileSignature } from 'lucide-react'
+import { UserPlus, Pencil, FileSignature, UserMinus, ChevronDown, ChevronUp } from 'lucide-react'
 import PageHeader from '../../components/common/PageHeader.jsx'
 import { Card } from '../../components/ui/Card.jsx'
 import DataTable from '../../components/ui/DataTable.jsx'
@@ -8,12 +8,12 @@ import Button from '../../components/ui/Button.jsx'
 import Badge from '../../components/ui/Badge.jsx'
 import { Field, Input, Select } from '../../components/ui/Form.jsx'
 import { CONTRACT_TYPES, PAYROLL_STATES } from '../../data/mockPersonnel.js'
-import { formatCOP, formatDate } from '../../utils/format.js'
+import { formatCOP, formatDate, toNameCase } from '../../utils/format.js'
 import { generateLaborCertificate, exportToCSV } from '../../utils/pdf.js'
 import { usePersonnel } from '../../hooks/usePersonnel.js'
 
 const emptyForm = { doc: '', name: '', position: '', contract: 'Indefinido', salary: '', state: 'Activo', start: '', end: '', area: '' }
-const stateVariant = { Activo: 'success', Inactivo: 'neutral', Suspendido: 'warning' }
+const stateVariant = { Activo: 'success', Inactivo: 'neutral', Suspendido: 'warning', Retirado: 'danger' }
 
 export default function PersonnelRegistry() {
   const { personnel: rows, addPersonnel, updatePersonnel } = usePersonnel()
@@ -23,11 +23,14 @@ export default function PersonnelRegistry() {
   const [errors, setErrors] = useState({})
   const [filterArea, setFilterArea] = useState('')
   const [filterContract, setFilterContract] = useState('')
+  const [showRetired, setShowRetired] = useState(false)
 
   const areas = useMemo(() => [...new Set(rows.map((p) => p.area))], [rows])
-  const data = rows.filter(
-    (p) => (!filterArea || p.area === filterArea) && (!filterContract || p.contract === filterContract)
+  const active = rows.filter(
+    (p) => p.state !== 'Retirado' && (!filterArea || p.area === filterArea) && (!filterContract || p.contract === filterContract)
   )
+  const retired = rows.filter((p) => p.state === 'Retirado')
+  const data = active
 
   const openCreate = () => { setEditing(null); setForm(emptyForm); setErrors({}); setOpen(true) }
   const openEdit = (p) => { setEditing(p); setForm({ ...p, end: p.end || '' }); setErrors({}); setOpen(true) }
@@ -45,7 +48,7 @@ export default function PersonnelRegistry() {
 
   const save = async () => {
     if (!validate()) return
-    const payload = { ...form, salary: Number(form.salary), end: form.end || null }
+    const payload = { ...form, name: toNameCase(form.name), salary: Number(form.salary), end: form.end || null }
     if (editing) await updatePersonnel(editing.id, payload)
     else await addPersonnel(payload)
     setOpen(false)
@@ -103,6 +106,46 @@ export default function PersonnelRegistry() {
           }
         />
       </Card>
+
+      {/* ── Personal Retirado ─────────────────────────────────────────── */}
+      <div style={{ marginTop: 24 }}>
+        <button
+          onClick={() => setShowRetired((v) => !v)}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 8, width: '100%',
+            padding: '12px 16px', borderRadius: 10,
+            background: 'var(--surface)', border: '1.5px solid var(--glass-border)',
+            color: 'var(--text-soft)', fontWeight: 700, fontSize: '0.9rem', cursor: 'pointer',
+            justifyContent: 'space-between',
+          }}
+        >
+          <span className="row gap-2">
+            <UserMinus size={16} style={{ color: '#FF5D73' }} />
+            Personal retirado
+            <span style={{ padding: '2px 10px', borderRadius: 100, background: '#FF5D7322', color: '#FF5D73', fontSize: '0.75rem', fontWeight: 800 }}>
+              {retired.length}
+            </span>
+          </span>
+          {showRetired ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+        </button>
+
+        {showRetired && (
+          <Card className="anim-up" style={{ marginTop: 12 }}>
+            {retired.length === 0 ? (
+              <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--text-soft)', fontSize: '0.875rem' }}>
+                No hay personal retirado registrado.
+              </div>
+            ) : (
+              <DataTable
+                columns={columns}
+                data={retired}
+                searchKeys={['doc', 'name', 'position', 'area']}
+                pageSize={8}
+              />
+            )}
+          </Card>
+        )}
+      </div>
 
       <Modal
         open={open}

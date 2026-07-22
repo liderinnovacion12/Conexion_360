@@ -22,8 +22,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onCloseMobile
       <div className="sidebar-brand">
         <LogoMark size={34} />
         <div className="brand-text">
-          <b>Conexión 360</b>
-          <span>Todo Ágil CTA</span>
+          <b>Conexión Todo Ágil 360</b>
         </div>
         <button className="collapse-btn" onClick={onToggle} aria-label="Contraer menú">
           {collapsed ? <PanelLeft size={15} /> : <PanelLeftClose size={15} />}

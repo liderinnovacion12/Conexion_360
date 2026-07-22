@@ -509,7 +509,7 @@ export default function LandingPage() {
       {/* WHY 360 */}
       <section className="lp-section lp-section-surface" id="por-que">
         <div className="lp-section-center lp-reveal">
-          <div className="lp-section-eyebrow">Por qué Conexión 360</div>
+          <div className="lp-section-eyebrow">Por qué Conexión Todo Ágil 360</div>
           <h2 className="lp-section-title" style={{ textAlign: 'center' }}>Una sola plataforma, visibilidad total</h2>
           <p className="lp-section-sub" style={{ textAlign: 'center' }}>Diseñada desde el inicio para el mercado colombiano y sus exigencias normativas.</p>
         </div>
@@ -587,7 +587,7 @@ export default function LandingPage() {
           </div>
         </div>
         <div className="lp-footer-bottom">
-          <div className="lp-footer-copy">© 2026 Conexión 360. Todos los derechos reservados. Hecho en Colombia 🇨🇴</div>
+          <div className="lp-footer-copy">© 2026 Conexión Todo Ágil 360. Todos los derechos reservados. Hecho en Colombia 🇨🇴</div>
           <div className="lp-footer-legal">
             <a href="#">Política de privacidad</a>
             <a href="#">Términos de uso</a>

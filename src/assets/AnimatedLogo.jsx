@@ -1,5 +1,4 @@
-// Animated assembling logo for the login backdrop.
-// Neon outline "draws" itself, then the solid faces fade in — subtle, not aggressive.
+// Logo animado triangular para la pantalla de login.
 export default function AnimatedLogo() {
   return (
     <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -48,18 +47,18 @@ export default function AnimatedLogo() {
         })}
       </g>
 
-      {/* Solid faces */}
+      {/* Solid faces — triangular */}
       <g filter="url(#al-glow)">
-        <path className="al-fill d1" d="M34 12 H20 a8 8 0 0 0 -8 8 v12 h9 v-9 a3 3 0 0 1 3 -3 h10 z" fill="url(#al-teal)" />
-        <path className="al-fill d2" d="M40 52 H30 v-9 h7 a3 3 0 0 0 3 -3 V20 h9 v24 a8 8 0 0 1 -8 8 z" fill="url(#al-violet)" />
-        <path className="al-fill d3" d="M12 32 v12 a8 8 0 0 0 8 8 h14 v-9 H24 a3 3 0 0 1 -3 -3 v-8 z" fill="#16213E" />
-        <circle className="al-fill d4" cx="32" cy="32" r="5.5" fill="url(#al-teal)" />
+        <path className="al-fill d1" d="M32 4 L47 31 L32 40 L17 31 Z" fill="url(#al-teal)" />
+        <path className="al-fill d2" d="M47 31 L62 58 L32 58 L32 40 Z" fill="url(#al-violet)" />
+        <path className="al-fill d3" d="M17 31 L32 40 L32 58 L2 58 Z" fill="#16213E" />
+        <circle className="al-fill d4" cx="32" cy="40" r="5.5" fill="url(#al-teal)" />
       </g>
 
-      {/* Neon outline drawing on top */}
-      <path className="al-line t" d="M34 12 H20 a8 8 0 0 0 -8 8 v12 h9 v-9 a3 3 0 0 1 3 -3 h10 z" />
-      <path className="al-line v l2" d="M40 52 H30 v-9 h7 a3 3 0 0 0 3 -3 V20 h9 v24 a8 8 0 0 1 -8 8 z" />
-      <path className="al-line t l3" d="M12 32 v12 a8 8 0 0 0 8 8 h14 v-9 H24 a3 3 0 0 1 -3 -3 v-8 z" />
+      {/* Neon outline */}
+      <path className="al-line t"    d="M32 4 L47 31 L32 40 L17 31 Z" />
+      <path className="al-line v l2" d="M47 31 L62 58 L32 58 L32 40 Z" />
+      <path className="al-line t l3" d="M17 31 L32 40 L32 58 L2 58 Z" />
     </svg>
   )
 }

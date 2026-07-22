@@ -37,7 +37,7 @@ export default function FinanceDashboard() {
       <div className="grid grid-kpi stagger" style={{ marginBottom: 18 }}>
         <KpiCard label="Valor total de nómina" value={formatCOP(totalPayroll(PERSONNEL))} icon={Wallet} accent="success" trend={{ dir: 'up', text: '+3.0% mensual' }} />
         <KpiCard label="Personal activo" value={activos.length} icon={Users} accent="teal" trend={{ dir: 'up', text: `${PERSONNEL.length} registros` }} />
-        <KpiCard label="Contratistas" value={contratistas.length} icon={Briefcase} accent="violet" trend={{ dir: 'flat', text: 'Prestación de servicios' }} />
+        <KpiCard label="Clientes" value={contratistas.length} icon={Briefcase} accent="violet" trend={{ dir: 'flat', text: 'Prestación de servicios' }} />
         <KpiCard label="Áreas operativas" value={new Set(PERSONNEL.map((p) => p.area)).size} icon={Building2} accent="cyan" trend={{ dir: 'up', text: 'Distribución por área' }} />
       </div>
 

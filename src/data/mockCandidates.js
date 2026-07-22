@@ -24,5 +24,5 @@ export const STATUS_VARIANT = {
 
 export const TRACKS = [
   { id: 'funcionario', label: 'Funcionarios' },
-  { id: 'contratista', label: 'Contratistas' },
+  { id: 'contratista', label: 'Clientes' },
 ]

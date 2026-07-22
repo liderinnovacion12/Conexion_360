@@ -37,7 +37,7 @@ export default function DashboardLayout() {
       />
       {mobileOpen && <div className="mobile-scrim" onClick={() => setMobileOpen(false)} />}
       <div className="main">
-        <Topbar title={title} subtitle="Conexión 360 · Todo Ágil CTA" onMenu={() => setMobileOpen(true)} />
+        <Topbar title={title} subtitle="Conexión Todo Ágil 360" onMenu={() => setMobileOpen(true)} />
         <main className="grow">
           <Outlet />
         </main>

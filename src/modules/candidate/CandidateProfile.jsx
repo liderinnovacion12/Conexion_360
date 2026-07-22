@@ -86,7 +86,7 @@ export default function CandidateProfile() {
           </div>
           <p className="card-sub" style={{ marginTop: 10 }}>
             {candidate.track === 'contratista'
-              ? 'Tu proceso corresponde a la vía de contratista (prestación de servicios). Ten a la mano tu RUT y certificación bancaria.'
+              ? 'Tu proceso corresponde a la vía de cliente (prestación de servicios). Ten a la mano tu RUT y certificación bancaria.'
               : 'Tu proceso corresponde a la vía de funcionario (vinculación directa a planta).'}
           </p>
         </Card>

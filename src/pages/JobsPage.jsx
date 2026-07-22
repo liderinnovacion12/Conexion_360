@@ -213,7 +213,7 @@ export default function JobsPage() {
             <span className="lp-accent-teal">oportunidad</span> laboral
           </h1>
           <p className="jp-hero-sub">
-            {loading ? '…' : `${active.length} vacante${active.length !== 1 ? 's' : ''} disponible${active.length !== 1 ? 's' : ''}`} en Conexión 360
+            {loading ? '…' : `${active.length} vacante${active.length !== 1 ? 's' : ''} disponible${active.length !== 1 ? 's' : ''}`} en Conexión Todo Ágil 360
           </p>
 
           {/* Barra de búsqueda principal */}
@@ -410,7 +410,7 @@ export default function JobsPage() {
       {/* FOOTER COMPACTO */}
       <footer className="jp-footer lp-footer">
         <div className="lp-footer-bottom" style={{ borderTop: 'none', paddingTop: 28 }}>
-          <div className="lp-footer-copy">© 2026 Conexión 360 · <Link to="/" style={{ color: 'var(--teal)' }}>Inicio</Link> · <Link to="/login" style={{ color: 'var(--teal)' }}>Iniciar sesión</Link></div>
+          <div className="lp-footer-copy">© 2026 Conexión Todo Ágil 360 ·<Link to="/" style={{ color: 'var(--teal)' }}>Inicio</Link> · <Link to="/login" style={{ color: 'var(--teal)' }}>Iniciar sesión</Link></div>
           <div className="lp-footer-legal">
             <a href="#">Política de privacidad</a>
             <a href="#">Términos de uso</a>

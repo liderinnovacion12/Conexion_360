@@ -41,6 +41,12 @@ export const daysBetween = (a, b = new Date()) => {
   return Math.round((d2 - d1) / (1000 * 60 * 60 * 24))
 }
 
+// Normaliza un nombre propio: primera letra de cada palabra en mayúscula, resto en minúscula
+export const toNameCase = (str) => {
+  if (!str) return str
+  return str.trim().replace(/\S+/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+}
+
 // Estado documental -> variante de Badge
 export const docStatusVariant = {
   pendiente: 'warning',

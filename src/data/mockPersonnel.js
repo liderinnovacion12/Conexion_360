@@ -1,6 +1,6 @@
 // Registro de personal para el módulo financiero / nómina.
 export const CONTRACT_TYPES = ['Indefinido', 'Fijo', 'Obra labor', 'Prestación de servicios']
-export const PAYROLL_STATES = ['Activo', 'Inactivo', 'Suspendido']
+export const PAYROLL_STATES = ['Activo', 'Inactivo', 'Suspendido', 'Retirado']
 
 export const PERSONNEL = [
   { id: 'p-001', doc: '1.018.456.789', name: 'María Gómez Restrepo', position: 'Analista de Operaciones', contract: 'Indefinido', salary: 3200000, state: 'Activo', start: '2022-03-01', end: null, area: 'Operaciones' },

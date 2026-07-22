@@ -83,7 +83,7 @@ export const NAV_CONFIG = {
       { to: '/reclutamiento/aplicaciones', label: 'Aplicaciones recibidas', icon: Inbox },
       { to: '/reclutamiento/todos-documentos', label: 'Documentos', icon: FolderOpen },
       { to: '/reclutamiento/pipeline', label: 'Pipeline', icon: KanbanSquare },
-      { to: '/reclutamiento/aspirantes', label: 'Aspirantes (contratistas y funcionarios)', icon: UserPlus },
+      { to: '/reclutamiento/aspirantes', label: 'Aspirantes (clientes y funcionarios)', icon: UserPlus },
       { to: '/reclutamiento/formularios', label: 'Constructor de formularios', icon: ListChecks },
       { to: '/reclutamiento/documentos', label: 'Revisión documental', icon: ClipboardCheck },
       { to: '/reclutamiento/editor-documentos', label: 'Editor de documentos', icon: FileSignature },
@@ -132,7 +132,7 @@ export const NAV_CONFIG = {
   ],
 
   [ROLES.CLIENT]: [
-    { section: 'Conexión 360', items: [
+    { section: 'Conexión Todo Ágil 360', items: [
       { to: '/cliente', label: 'Servicios', icon: Store, end: true },
       { to: '/cliente/solicitudes', label: 'Mis solicitudes', icon: ListChecks },
     ]},

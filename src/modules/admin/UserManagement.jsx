@@ -12,6 +12,7 @@ import { useUsers } from '../../hooks/useUsers.js'
 import { usePersonnel } from '../../hooks/usePersonnel.js'
 import { useCandidates } from '../../hooks/useCandidates.js'
 import { ROLE_META, ROLES } from '../../utils/roles.js'
+import { toNameCase } from '../../utils/format.js'
 import { CONTRACT_TYPES } from '../../data/mockPersonnel.js'
 import { exportToCSV } from '../../utils/pdf.js'
 import { USE_SUPABASE } from '../../services/api.js'
@@ -149,6 +150,7 @@ export default function UserManagement() {
   }
   const save = async () => {
     if (!form.name || !form.email) return
+    const normalForm = { ...form, name: toNameCase(form.name) }
     if (editing) {
       setSaving(true)
       setSaveError(null)
@@ -158,7 +160,7 @@ export default function UserManagement() {
         if (USE_SUPABASE && form.email !== editing.email) {
           await adminUpdateCredentials(editing.id, { email: form.email })
         }
-        await updateUser(editing.id, form)
+        await updateUser(editing.id, normalForm)
         setOpen(false)
       } catch (err) {
         setSaveError(err.message)
@@ -167,8 +169,8 @@ export default function UserManagement() {
       }
     } else {
       try {
-        const avatar = form.name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()
-        await addUser({ ...form, avatar })
+        const avatar = normalForm.name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()
+        await addUser({ ...normalForm, avatar })
         setCreated({ email: form.email, password: 'demo' })
       } catch (err) {
         setCreateError(err.message)

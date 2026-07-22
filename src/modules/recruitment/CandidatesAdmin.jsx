@@ -14,7 +14,7 @@ import SignatureSeal from '../../components/feature/SignatureSeal.jsx'
 import ReAuthModal from '../../components/feature/ReAuthModal.jsx'
 import { STATUS_VARIANT } from '../../data/mockCandidates.js'
 import { stageLabel } from '../../data/pipeline.js'
-import { formatDate, formatDateTime } from '../../utils/format.js'
+import { formatDate, formatDateTime, toNameCase } from '../../utils/format.js'
 import { exportToCSV } from '../../utils/pdf.js'
 import { nextConsecutive, verificationCode } from '../../utils/documents.js'
 import { useCandidateGroups } from '../../hooks/useCandidateGroups.js'
@@ -67,7 +67,7 @@ export default function CandidatesAdmin() {
 
   const create = async () => {
     if (!form.name || !form.email || form.track === NEW_TRACK_VALUE) return
-    await addCandidate(form)
+    await addCandidate({ ...form, name: toNameCase(form.name) })
     setCreated({ email: form.email, password: 'Temp#2025' })
     setForm({ name: '', doc: '', email: '', phone: '', position: '', city: '', track: 'funcionario' })
   }

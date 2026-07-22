@@ -175,10 +175,12 @@ export function AuthProvider({ children }) {
     if (!USE_SUPABASE) {
       throw new Error('El registro de aspirantes requiere el backend de Supabase conectado.')
     }
+    // Normalizar nombre: primera letra de cada palabra en mayúscula
+    const normalizedName = name.trim().replace(/\S+/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { name, role: 'candidate', area: 'Proceso de selección', doc } },
+      options: { data: { name: normalizedName, role: 'candidate', area: 'Proceso de selección', doc } },
     })
 
     // Supabase devuelve un usuario "fantasma" (identities vacío) cuando el

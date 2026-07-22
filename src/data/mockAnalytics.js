@@ -36,7 +36,7 @@ export const DOC_COMPLIANCE = [
 
 export const PERSONNEL_DISTRIBUTION = [
   { name: 'Personal activo', value: 159, color: '#19E3D9' },
-  { name: 'Contratistas', value: 28, color: '#9B5DE5' },
+  { name: 'Clientes', value: 28, color: '#9B5DE5' },
   { name: 'Aspirantes', value: 12, color: '#FFC857' },
   { name: 'Inactivos', value: 7, color: '#6b7793' },
 ]

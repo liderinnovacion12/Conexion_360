@@ -12,7 +12,7 @@ import {
 const KPIS = [
   { label: 'Personal activo',      value: '159',     sub: '+1.9% este mes',   accent: '#19E3D9', icon: Users      },
   { label: 'Aspirantes en proceso',value: '12',      sub: '+3 esta semana',   accent: '#9B5DE5', icon: UserPlus   },
-  { label: 'Contratistas activos', value: '28',      sub: 'Sin cambios',      accent: '#2EE6A6', icon: Briefcase  },
+  { label: 'Clientes activos',     value: '28',      sub: 'Sin cambios',      accent: '#2EE6A6', icon: Briefcase  },
   { label: 'Nómina mes actual',    value: '$55.4 M', sub: '+3.0% vs anterior',accent: '#FFC857', icon: Wallet     },
   { label: 'Tasa de conversión',   value: '12.5%',   sub: 'Candidatos → contratos', accent: '#19E3D9', icon: TrendingUp },
   { label: 'Aprob. documental',    value: '1.8 días',sub: '-0.4 días',        accent: '#2EE6A6', icon: Clock      },
